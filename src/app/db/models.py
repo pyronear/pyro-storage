@@ -17,7 +17,7 @@ class AccessType(str, enum.Enum):
     admin: str = 'admin'
 
 
-class Accesses(Base):
+class Accesses(Base):  # type: ignore[valid-type,misc]
     __tablename__ = "accesses"
 
     id = Column(Integer, primary_key=True)
@@ -25,11 +25,8 @@ class Accesses(Base):
     hashed_password = Column(String(70), nullable=False)
     scope = Column(Enum(AccessType), default=AccessType.user, nullable=False)
 
-    user = relationship("Users", uselist=False, back_populates="access")
-    group = relationship("Groups", uselist=False, back_populates="accesses")
-
     def __repr__(self):
-        return f"<Access(login='{self.login}', scope='{self.scope}', group_id='{self.group_id}')>"
+        return f"<Access(login='{self.login}', scope='{self.scope}')>"
 
 
 class MediaType(str, enum.Enum):
@@ -37,7 +34,7 @@ class MediaType(str, enum.Enum):
     video: str = 'video'
 
 
-class Media(Base):
+class Media(Base):  # type: ignore[valid-type,misc]
     __tablename__ = "media"
 
     id = Column(Integer, primary_key=True)
@@ -50,7 +47,7 @@ class Media(Base):
         return f"<Media(bucket_key='{self.bucket_key}', type='{self.type}'>"
 
 
-class Annotations(Base):
+class Annotations(Base):  # type: ignore[valid-type,misc]
     __tablename__ = "annotations"
 
     id = Column(Integer, primary_key=True)
@@ -58,7 +55,7 @@ class Annotations(Base):
     bucket_key = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=func.now())
 
-    media = relationship("Media", uselist=False, back_populates="annotations")
+    media = relationship("Media", uselist=False, back_populates="annotations")  # type: ignore[var-annotated]
 
     def __repr__(self):
         return f"<Media(media_id='{self.media_id}', bucket_key='{self.bucket_key}'>"
