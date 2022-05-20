@@ -19,7 +19,7 @@ jobs:
           QARNOT_TOKEN: ${{ secrets.QARNOT_TOKEN }}
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           BUCKET_MEDIA_FOLDER: ${{ secrets.BUCKET_MEDIA_FOLDER }}
-          BUCKET_ANNOTATIONS_FOLDER: ${{ secrets.BUCKET_ANNOTATIONS_FOLDER }}
+          BUCKET_ANNOT_FOLDER: ${{ secrets.BUCKET_ANNOT_FOLDER }}
         run: docker-compose up -d --build
       - name: Docker sanity check
         run: sleep 10 && nc -vz localhost 8080
@@ -36,7 +36,7 @@ jobs:
           QARNOT_TOKEN: ${{ secrets.QARNOT_TOKEN }}
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           BUCKET_MEDIA_FOLDER: ${{ secrets.BUCKET_MEDIA_FOLDER }}
-          BUCKET_ANNOTATIONS_FOLDER: ${{ secrets.BUCKET_ANNOTATIONS_FOLDER }}
+          BUCKET_ANNOT_FOLDER: ${{ secrets.BUCKET_ANNOT_FOLDER }}
         run: docker-compose up -d --build
       - name: Install dependencies in docker
         run: |
