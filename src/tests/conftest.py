@@ -1,0 +1,51 @@
+# Copyright (C) 2021, Pyronear contributors.
+
+# This program is licensed under the Apache License version 2.
+# See LICENSE or go to <https://www.apache.org/licenses/LICENSE-2.0.txt> for full license details.
+
+import pytest
+from httpx import AsyncClient
+
+from app.api.security import create_unlimited_access_token
+from app.main import app
+from tests.db_utils import database as test_database
+from tests.db_utils import reset_test_db
+
+
+async def mock_hash_password(password):
+    return f"hashed_{password}"
+
+
+async def mock_verify_password(plain_password, hashed_password):
+    return hashed_password == f"hashed_{plain_password}"
+
+
+async def get_token(access_id, scopes):
+
+    token_data = {"sub": str(access_id), "scopes": scopes}
+    token = await create_unlimited_access_token(token_data)
+
+    return {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
+
+
+def pytest_configure():
+    # api.security patching
+    pytest.mock_hash_password = mock_hash_password
+    pytest.mock_verify_password = mock_verify_password
+    pytest.get_token = get_token
+
+
+@pytest.fixture(scope="function")
+async def test_app_asyncio():
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac  # testing happens here
+
+
+@pytest.fixture(scope="function")
+async def test_db():
+    try:
+        await test_database.connect()
+        yield test_database
+    finally:
+        await reset_test_db()
+        await test_database.disconnect()
