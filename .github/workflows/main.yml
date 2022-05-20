@@ -1,0 +1,75 @@
+name: api
+
+on:
+  push:
+    branches: master
+  pull_request:
+    branches: master
+
+jobs:
+  docker-ready:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build & run docker
+        env:
+          QARNOT_TOKEN: ${{ secrets.QARNOT_TOKEN }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          BUCKET_MEDIA_FOLDER: ${{ secrets.BUCKET_MEDIA_FOLDER }}
+          BUCKET_ANNOTATIONS_FOLDER: ${{ secrets.BUCKET_ANNOTATIONS_FOLDER }}
+        run: docker-compose up -d --build
+      - name: Docker sanity check
+        run: sleep 10 && nc -vz localhost 8080
+      - name: Ping server
+        run: curl http://localhost:8080/docs
+
+  pytest:
+    runs-on: ubuntu-latest
+    needs: docker-ready
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build & run docker
+        env:
+          QARNOT_TOKEN: ${{ secrets.QARNOT_TOKEN }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          BUCKET_MEDIA_FOLDER: ${{ secrets.BUCKET_MEDIA_FOLDER }}
+          BUCKET_ANNOTATIONS_FOLDER: ${{ secrets.BUCKET_ANNOTATIONS_FOLDER }}
+        run: docker-compose up -d --build
+      - name: Install dependencies in docker
+        run: |
+          docker-compose exec -T pyroapi python -m pip install --upgrade pip
+          docker-compose exec -T pyroapi pip install -r requirements-dev.txt
+      - name: Run docker test
+        run: |
+          docker-compose exec -T pyroapi coverage --version
+          docker-compose exec -T pyroapi coverage run -m pytest tests/
+          docker-compose exec -T pyroapi coverage xml
+          docker cp pyro-storage_pyrostorage_1:/app/coverage.xml .
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          file: ./coverage.xml
+          flags: unittests
+          fail_ci_if_error: true
+
+  headers:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python: [3.7]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: x64
+      - name: Run unittests
+        run: python .github/validate_headers.py
