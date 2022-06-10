@@ -19,7 +19,7 @@ logger = logging.getLogger("uvicorn.error")
 
 metadata.create_all(bind=engine)
 
-# Sentry
+# Sentry
 if isinstance(cfg.SENTRY_DSN, str):
     sentry_sdk.init(
         cfg.SENTRY_DSN,

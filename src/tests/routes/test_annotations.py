@@ -60,12 +60,12 @@ async def test_get_annotation(test_app_asyncio, init_test_db, access_idx, annota
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.get(f"/annotations/{annotation_id}", headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         assert response.json() == {k: v for k, v in ANNOTATIONS_TABLE[annotation_id - 1].items() if k != "bucket_key"}
@@ -80,18 +80,19 @@ async def test_get_annotation(test_app_asyncio, init_test_db, access_idx, annota
     ],
 )
 @pytest.mark.asyncio
-async def test_fetch_annotations(test_app_asyncio, init_test_db, access_idx, status_code, status_details,
-                                 expected_results):
+async def test_fetch_annotations(
+    test_app_asyncio, init_test_db, access_idx, status_code, status_details, expected_results
+):
 
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.get("/annotations/", headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         assert response.json() == expected_results
@@ -108,30 +109,31 @@ async def test_fetch_annotations(test_app_asyncio, init_test_db, access_idx, sta
     ],
 )
 @pytest.mark.asyncio
-async def test_create_annotation(test_app_asyncio, init_test_db, test_db, access_idx, payload, status_code,
-                                 status_details):
+async def test_create_annotation(
+    test_app_asyncio, init_test_db, test_db, access_idx, payload, status_code, status_details
+):
 
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     utc_dt = datetime.utcnow()
     response = await test_app_asyncio.post("/annotations/", data=json.dumps(payload), headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         json_response = response.json()
         test_response = {"id": len(ANNOTATIONS_TABLE) + 1, **payload}
-        assert {k: v for k, v in json_response.items() if k != 'created_at'} == test_response
+        assert {k: v for k, v in json_response.items() if k != "created_at"} == test_response
 
         new_annotation = await get_entry(test_db, db.annotations, json_response["id"])
         new_annotation = dict(**new_annotation)
 
         # Timestamp consistency
-        assert new_annotation['created_at'] > utc_dt and new_annotation['created_at'] < datetime.utcnow()
+        assert new_annotation["created_at"] > utc_dt and new_annotation["created_at"] < datetime.utcnow()
 
 
 @pytest.mark.parametrize(
@@ -147,18 +149,19 @@ async def test_create_annotation(test_app_asyncio, init_test_db, test_db, access
     ],
 )
 @pytest.mark.asyncio
-async def test_update_annotation(test_app_asyncio, init_test_db, test_db,
-                                 access_idx, payload, annotation_id, status_code, status_details):
+async def test_update_annotation(
+    test_app_asyncio, init_test_db, test_db, access_idx, payload, annotation_id, status_code, status_details
+):
 
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.put(f"/annotations/{annotation_id}/", data=json.dumps(payload), headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         updated_annotation = await get_entry(test_db, db.annotations, annotation_id)
@@ -179,23 +182,24 @@ async def test_update_annotation(test_app_asyncio, init_test_db, test_db,
     ],
 )
 @pytest.mark.asyncio
-async def test_delete_annotation(test_app_asyncio, init_test_db, access_idx, annotation_id, status_code,
-                                 status_details):
+async def test_delete_annotation(
+    test_app_asyncio, init_test_db, access_idx, annotation_id, status_code, status_details
+):
 
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.delete(f"/annotations/{annotation_id}/", headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         assert response.json() == {k: v for k, v in ANNOTATIONS_TABLE[annotation_id - 1].items() if k != "bucket_key"}
         remaining_annotation = await test_app_asyncio.get("/annotations/", headers=auth)
-        assert all(entry['id'] != annotation_id for entry in remaining_annotation.json())
+        assert all(entry["id"] != annotation_id for entry in remaining_annotation.json())
 
 
 @pytest.mark.asyncio
@@ -203,7 +207,7 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
 
     admin_idx = 1
     # Create a custom access token
-    admin_auth = await pytest.get_token(ACCESS_TABLE[admin_idx]['id'], ACCESS_TABLE[admin_idx]['scope'].split())
+    admin_auth = await pytest.get_token(ACCESS_TABLE[admin_idx]["id"], ACCESS_TABLE[admin_idx]["scope"].split())
 
     # 1 - Create a annotation that will have an upload
     payload = {"media_id": 2}
@@ -214,41 +218,47 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     # 2 - Upload something
     async def mock_upload_file(bucket_key, file_binary):
         return True
+
     monkeypatch.setattr(annotations_bucket, "upload_file", mock_upload_file)
 
     # Download and save a temporary file
     local_tmp_path = os.path.join(tempfile.gettempdir(), "my_temp_annotation.json")
     data = {"label": "fire"}
-    with open(local_tmp_path, 'w') as f:
+    with open(local_tmp_path, "w") as f:
         json.dump(data, f)
 
     async def mock_get_file(bucket_key):
         return local_tmp_path
+
     monkeypatch.setattr(annotations_bucket, "get_file", mock_get_file)
 
     async def mock_delete_file(filename):
         return True
+
     monkeypatch.setattr(annotations_bucket, "delete_file", mock_delete_file)
 
     # Switch content-type from JSON to multipart
     del admin_auth["Content-Type"]
 
-    with open(local_tmp_path, 'r') as content:
-        response = await test_app_asyncio.post(f"/annotations/{new_annotation_id}/upload",
-                                               files=dict(file=content), headers=admin_auth)
+    with open(local_tmp_path, "r") as content:
+        response = await test_app_asyncio.post(
+            f"/annotations/{new_annotation_id}/upload", files=dict(file=content), headers=admin_auth
+        )
 
-    assert response.status_code == 200, print(response.json()['detail'])
+    assert response.status_code == 200, print(response.json()["detail"])
     response_json = response.json()
     updated_annotation = await get_entry(test_db, db.annotations, response_json["id"])
     updated_annotation = dict(**updated_annotation)
     response_json.pop("created_at")
-    assert {k: v for k, v in updated_annotation.items() if k not in ('created_at', "bucket_key")} == response_json
+    assert {k: v for k, v in updated_annotation.items() if k not in ("created_at", "bucket_key")} == response_json
     assert updated_annotation["bucket_key"] is not None
 
     # 2b - Upload failing
     async def failing_upload(bucket_key, file_binary):
         return False
+
     monkeypatch.setattr(annotations_bucket, "upload_file", failing_upload)
-    response = await test_app_asyncio.post(f"/annotations/{new_annotation_id}/upload", files=dict(file='bar'),
-                                           headers=admin_auth)
+    response = await test_app_asyncio.post(
+        f"/annotations/{new_annotation_id}/upload", files=dict(file="bar"), headers=admin_auth
+    )
     assert response.status_code == 500

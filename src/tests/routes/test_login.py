@@ -39,4 +39,4 @@ async def test_create_access_token(test_app_asyncio, init_test_db, payload, stat
 
     assert response.status_code == status_code, print(payload)
     if isinstance(status_detail, str):
-        assert response.json()['detail'] == status_detail
+        assert response.json()["detail"] == status_detail

@@ -13,8 +13,8 @@ from .session import Base
 
 
 class AccessType(str, enum.Enum):
-    user: str = 'user'
-    admin: str = 'admin'
+    user: str = "user"
+    admin: str = "admin"
 
 
 class Accesses(Base):
@@ -30,8 +30,8 @@ class Accesses(Base):
 
 
 class MediaType(str, enum.Enum):
-    image: str = 'image'
-    video: str = 'video'
+    image: str = "image"
+    video: str = "video"
 
 
 class Media(Base):

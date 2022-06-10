@@ -47,18 +47,18 @@ async def test_get_access(init_test_db, test_app_asyncio, access_idx, access_id,
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.get(f"/accesses/{access_id}", headers=auth)
     assert response.status_code == status_code
 
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code == 200:
         access = None
         for _access in ACCESS_TABLE:
-            if _access['id'] == access_id:
+            if _access["id"] == access_id:
                 access = _access
                 break
         assert response.json() == {k: v for k, v in access.items() if k != "hashed_password"}
@@ -78,16 +78,15 @@ async def test_fetch_accesses(init_test_db, test_app_asyncio, access_idx, status
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.get("/accesses/", headers=auth)
     assert response.status_code == status_code
 
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
     if response.status_code == 200:
-        assert response.json() == [{k: v for k, v in entry.items() if k != "hashed_password"}
-                                   for entry in ACCESS_TABLE]
+        assert response.json() == [{k: v for k, v in entry.items() if k != "hashed_password"} for entry in ACCESS_TABLE]
 
 
 @pytest.mark.parametrize(
@@ -95,10 +94,18 @@ async def test_fetch_accesses(init_test_db, test_app_asyncio, access_idx, status
     [
         [None, {"login": "dummy_login", "scope": "admin", "password": "my_pwd"}, 401, "Not authenticated"],
         # non-admin can't create access
-        [0, {"login": "dummy_login", "scope": "user", "password": "my_pwd"}, 403,
-         "Your access scope is not compatible with this operation."],
-        [0, {"login": "dummy_login", "scope": "admin", "password": "my_pwd"}, 403,
-         "Your access scope is not compatible with this operation."],
+        [
+            0,
+            {"login": "dummy_login", "scope": "user", "password": "my_pwd"},
+            403,
+            "Your access scope is not compatible with this operation.",
+        ],
+        [
+            0,
+            {"login": "dummy_login", "scope": "admin", "password": "my_pwd"},
+            403,
+            "Your access scope is not compatible with this operation.",
+        ],
         [1, {"login": "dummy_login", "scope": "user", "password": "my_pwd"}, 201, None],
         [1, {"login": "dummy_login", "scope": "admin", "password": "my_pwd"}, 201, None],
         [1, {"login": 1, "scope": "admin", "password": "my_pwd"}, 422, None],
@@ -111,12 +118,12 @@ async def test_create_access(test_app_asyncio, init_test_db, test_db, access_idx
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.post("/accesses/", data=json.dumps(payload), headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         json_response = response.json()
@@ -140,18 +147,19 @@ async def test_create_access(test_app_asyncio, init_test_db, test_db, access_idx
     ],
 )
 @pytest.mark.asyncio
-async def test_update_access_pwd(test_app_asyncio, init_test_db, test_db,
-                                 access_idx, payload, access_id, status_code, status_details):
+async def test_update_access_pwd(
+    test_app_asyncio, init_test_db, test_db, access_idx, payload, access_id, status_code, status_details
+):
 
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.put(f"/accesses/{access_id}/", data=json.dumps(payload), headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         updated_access = await get_entry(test_db, db.accesses, access_id)
@@ -179,14 +187,14 @@ async def test_delete_access(test_app_asyncio, init_test_db, access_idx, access_
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
-        auth = await pytest.get_token(ACCESS_TABLE[access_idx]['id'], ACCESS_TABLE[access_idx]['scope'].split())
+        auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     response = await test_app_asyncio.delete(f"/accesses/{access_id}/", headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
-        assert response.json()['detail'] == status_details
+        assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
         assert response.json() == {k: v for k, v in ACCESS_TABLE[access_id - 1].items() if k != "hashed_password"}
         remaining_annotation = await test_app_asyncio.get("/accesses/", headers=auth)
-        assert all(entry['id'] != access_id for entry in remaining_annotation.json())
+        assert all(entry["id"] != access_id for entry in remaining_annotation.json())

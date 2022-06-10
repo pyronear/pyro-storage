@@ -20,8 +20,7 @@ async def init_db():
 
         hashed_password = await hash_password(cfg.SUPERUSER_PWD)
 
-        access = AccessCreation(login=login, hashed_password=hashed_password,
-                                scope=AccessType.admin)
+        access = AccessCreation(login=login, hashed_password=hashed_password, scope=AccessType.admin)
         await crud.create_entry(accesses, access)
 
     return None

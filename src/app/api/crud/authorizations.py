@@ -17,8 +17,5 @@ async def is_admin_access(access_id: int) -> bool:
 
 async def check_access_read(access_id: int) -> bool:
     if not (await is_admin_access(access_id)):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="This access can't read resources"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="This access can't read resources")
     return True

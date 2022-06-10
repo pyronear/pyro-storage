@@ -19,12 +19,12 @@ oauth2_scheme = OAuth2PasswordBearer(
     scopes={
         AccessType.user: "Read information about the current user.",
         AccessType.admin: "Admin rights on all routes.",
-    }
+    },
 )
 
 
 async def get_current_access(security_scopes: SecurityScopes, token: str = Depends(oauth2_scheme)) -> AccessRead:
-    """ Dependency to use as fastapi.security.Security with scopes.
+    """Dependency to use as fastapi.security.Security with scopes.
 
     >>> @app.get("/users/me")
     >>> async def read_users_me(current_user: User = Security(get_current_access, scopes=["me"])):

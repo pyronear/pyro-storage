@@ -23,12 +23,13 @@ async def check_media_registration(media_id: int) -> Dict[str, Any]:
     return await crud.get_entry(media, media_id)
 
 
-@router.post("/", response_model=MediaOut, status_code=status.HTTP_201_CREATED,
-             summary="Create a media related to a specific device")
-async def create_media(
-    payload: MediaIn,
-    _=Security(get_current_access, scopes=[AccessType.admin])
-):
+@router.post(
+    "/",
+    response_model=MediaOut,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a media related to a specific device",
+)
+async def create_media(payload: MediaIn, _=Security(get_current_access, scopes=[AccessType.admin])):
     """
     Creates a media related to specific device, based on device_id as argument
 
@@ -40,8 +41,7 @@ async def create_media(
 
 @router.get("/{media_id}/", response_model=MediaOut, summary="Get information about a specific media")
 async def get_media(
-    media_id: int = Path(..., gt=0),
-    requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
+    media_id: int = Path(..., gt=0), requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
 ):
     """
     Based on a media_id, retrieves information about the specified media
@@ -53,8 +53,7 @@ async def get_media(
 
 @router.get("/", response_model=List[MediaOut], summary="Get the list of all media")
 async def fetch_media(
-    requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user]),
-    session=Depends(get_session)
+    requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user]), session=Depends(get_session)
 ):
     """
     Retrieves the list of all media and their information
@@ -66,9 +65,7 @@ async def fetch_media(
 
 @router.put("/{media_id}/", response_model=MediaOut, summary="Update information about a specific media")
 async def update_media(
-    payload: MediaIn,
-    media_id: int = Path(..., gt=0),
-    _=Security(get_current_access, scopes=[AccessType.admin])
+    payload: MediaIn, media_id: int = Path(..., gt=0), _=Security(get_current_access, scopes=[AccessType.admin])
 ):
     """
     Based on a media_id, updates information about the specified media
@@ -77,10 +74,7 @@ async def update_media(
 
 
 @router.delete("/{media_id}/", response_model=MediaOut, summary="Delete a specific media")
-async def delete_media(
-    media_id: int = Path(..., gt=0),
-    _=Security(get_current_access, scopes=[AccessType.admin])
-):
+async def delete_media(media_id: int = Path(..., gt=0), _=Security(get_current_access, scopes=[AccessType.admin])):
     """
     Based on a media_id, deletes the specified media
     """
@@ -109,34 +103,30 @@ async def upload_media(
     bucket_key = resolve_bucket_key(file_name, media_bucket.folder)
 
     # Upload if bucket_key is different (otherwise the content is the exact same)
-    if isinstance(entry['bucket_key'], str) and entry['bucket_key'] == bucket_key:
+    if isinstance(entry["bucket_key"], str) and entry["bucket_key"] == bucket_key:
         return await crud.get_entry(media, media_id)
     else:
         # Failed upload
         if not await media_bucket.upload_file(bucket_key=bucket_key, file_binary=file.file):
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed upload"
-            )
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed upload")
         # Data integrity check
         uploaded_file = await media_bucket.get_file(bucket_key=bucket_key)
         # Failed download
         if uploaded_file is None:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="The data integrity check failed (unable to download media from bucket)"
+                detail="The data integrity check failed (unable to download media from bucket)",
             )
         # Remove temp local file
         background_tasks.add_task(media_bucket.flush_tmp_file, uploaded_file)
         # Check the hash
-        with open(uploaded_file, 'rb') as f:
+        with open(uploaded_file, "rb") as f:
             upload_hash = hash_content_file(f.read())
         if upload_hash != file_hash:
             # Delete corrupted file
             await media_bucket.delete_file(bucket_key)
             raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Data was corrupted during upload"
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Data was corrupted during upload"
             )
 
         entry_dict = dict(**entry)
@@ -146,8 +136,7 @@ async def upload_media(
 
 @router.get("/{media_id}/url", response_model=MediaUrl, status_code=200)
 async def get_media_url(
-    media_id: int = Path(..., gt=0),
-    requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
+    media_id: int = Path(..., gt=0), requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
 ):
     """Resolve the temporary media image URL"""
     await check_access_read(requester.id)
@@ -155,5 +144,5 @@ async def get_media_url(
     # Check in DB
     media_instance = await check_media_registration(media_id)
     # Check in bucket
-    temp_public_url = await media_bucket.get_public_url(media_instance['bucket_key'])
+    temp_public_url = await media_bucket.get_public_url(media_instance["bucket_key"])
     return MediaUrl(url=temp_public_url)

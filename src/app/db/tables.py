@@ -7,7 +7,7 @@
 from .models import Accesses, Annotations, Media
 from .session import Base
 
-__all__ = ['metadata', 'accesses', 'media', 'annotations']
+__all__ = ["metadata", "accesses", "media", "annotations"]
 
 accesses = Accesses.__table__
 media = Media.__table__

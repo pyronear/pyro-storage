@@ -6,7 +6,7 @@
 from app import config as cfg
 from app.services.bucket import QarnotBucket
 
-__all__ = ['media_bucket', 'annotations_bucket']
+__all__ = ["media_bucket", "annotations_bucket"]
 
 
 media_bucket = QarnotBucket(cfg.BUCKET_NAME, cfg.BUCKET_MEDIA_FOLDER)
