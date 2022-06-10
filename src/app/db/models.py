@@ -17,7 +17,7 @@ class AccessType(str, enum.Enum):
     admin: str = 'admin'
 
 
-class Accesses(Base):  # type: ignore[valid-type,misc]
+class Accesses(Base):
     __tablename__ = "accesses"
 
     id = Column(Integer, primary_key=True)
@@ -34,7 +34,7 @@ class MediaType(str, enum.Enum):
     video: str = 'video'
 
 
-class Media(Base):  # type: ignore[valid-type,misc]
+class Media(Base):
     __tablename__ = "media"
 
     id = Column(Integer, primary_key=True)
@@ -46,7 +46,7 @@ class Media(Base):  # type: ignore[valid-type,misc]
         return f"<Media(bucket_key='{self.bucket_key}', type='{self.type}'>"
 
 
-class Annotations(Base):  # type: ignore[valid-type,misc]
+class Annotations(Base):
     __tablename__ = "annotations"
 
     id = Column(Integer, primary_key=True)
@@ -54,7 +54,7 @@ class Annotations(Base):  # type: ignore[valid-type,misc]
     bucket_key = Column(String(100), nullable=True)
     created_at = Column(DateTime, default=func.now())
 
-    media = relationship("Media", uselist=False, back_populates="annotations")  # type: ignore[var-annotated]
+    media = relationship("Media", uselist=False, back_populates="annotations")
 
     def __repr__(self):
         return f"<Media(media_id='{self.media_id}', bucket_key='{self.bucket_key}'>"

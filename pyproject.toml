@@ -1,4 +1,5 @@
 [tool.mypy]
+mypy_path = "src/"
 files = "src/app"
 show_error_codes = true
 pretty = true
@@ -14,6 +15,7 @@ module = [
     "qarnot.*",
     "jose.*",
     "passlib.*",
+    "app.*",
 ]
 ignore_missing_imports = true
 

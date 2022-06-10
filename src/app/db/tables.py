@@ -13,4 +13,4 @@ accesses = Accesses.__table__
 media = Media.__table__
 annotations = Annotations.__table__
 
-metadata = Base.metadata  # type: ignore[attr-defined]
+metadata = Base.metadata

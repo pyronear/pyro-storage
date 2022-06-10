@@ -72,4 +72,4 @@ jobs:
       - name: Run mypy
         run: |
           mypy --version
-          mypy src/app
+          mypy
