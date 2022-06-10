@@ -9,7 +9,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Pa
 
 from app.api import crud
 from app.api.crud.authorizations import check_access_read, is_admin_access
-from app.api.deps import get_current_access, get_current_user
+from app.api.deps import get_current_access
 from app.api.schemas import AccessType, MediaCreation, MediaIn, MediaOut, MediaUrl
 from app.api.security import hash_content_file
 from app.db import get_session, media
@@ -147,7 +147,7 @@ async def upload_media(
 @router.get("/{media_id}/url", response_model=MediaUrl, status_code=200)
 async def get_media_url(
     media_id: int = Path(..., gt=0),
-    requester=Security(get_current_user, scopes=[AccessType.admin, AccessType.user])
+    requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
 ):
     """Resolve the temporary media image URL"""
     await check_access_read(requester.id)

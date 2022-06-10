@@ -13,13 +13,13 @@ import requests
 
 from app import db
 from app.api import crud
-from app.services import bucket_service
+from app.services import media_bucket
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
 
 ACCESS_TABLE = [
-    {"id": 1, "group_id": 1, "login": "first_login", "hashed_password": "hashed_pwd", "scope": "user"},
-    {"id": 2, "group_id": 1, "login": "second_login", "hashed_password": "hashed_pwd", "scope": "admin"},
+    {"id": 1, "login": "first_login", "hashed_password": "hashed_pwd", "scope": "user"},
+    {"id": 2, "login": "second_login", "hashed_password": "hashed_pwd", "scope": "admin"},
 ]
 
 MEDIA_TABLE = [
@@ -43,12 +43,10 @@ async def init_test_db(monkeypatch, test_db):
     "access_idx, media_id, status_code, status_details",
     [
         [None, 1, 401, "Not authenticated"],
-        [0, 1, 200, None],
+        [0, 1, 403, "This access can't read resources"],
         [1, 1, 200, None],
-        [2, 1, 403, "Your access scope is not compatible with this operation."],
         [1, 999, 404, "Table media has no entry with id=999"],
         [1, 0, 422, None],
-        [4, 1, 403, "This access can't read resources from group_id=1"],
     ],
 )
 @pytest.mark.asyncio
@@ -72,9 +70,8 @@ async def test_get_media(test_app_asyncio, init_test_db, access_idx, media_id, s
     "access_idx, status_code, status_details, expected_results",
     [
         [None, 401, "Not authenticated", None],
-        [0, 200, None, [MEDIA_TABLE[0]]],
+        [0, 200, None, []],
         [1, 200, None, MEDIA_TABLE],
-        [2, 403, "Your access scope is not compatible with this operation.", None],
     ],
 )
 @pytest.mark.asyncio
@@ -98,11 +95,9 @@ async def test_fetch_media(test_app_asyncio, init_test_db, access_idx, status_co
     "access_idx, payload, status_code, status_details",
     [
         [None, {}, 401, "Not authenticated"],
-        [0, {"device_id": 1}, 403, "Your access scope is not compatible with this operation."],
+        [0, {"type": "video"}, 403, "Your access scope is not compatible with this operation."],
         [1, {}, 201, None],
-        [2, {"device_id": 1}, 403, "Your access scope is not compatible with this operation."],
-        [1, {"device_id": "device"}, 422, None],
-        [1, {}, 422, None],
+        [1, {"type": "audio"}, 422, None],
     ],
 )
 @pytest.mark.asyncio
@@ -137,12 +132,9 @@ async def test_create_media(test_app_asyncio, init_test_db, test_db, access_idx,
         [None, {}, 1, 401, "Not authenticated"],
         [0, {"type": "video"}, 1, 403, "Your access scope is not compatible with this operation."],
         [1, {"type": "video"}, 1, 200, None],
-        [2, {"type": "video"}, 1, 403, "Your access scope is not compatible with this operation."],
-        [1, {}, 1, 422, None],
         [1, {"type": "audio"}, 1, 422, None],
         [1, {"type": "image"}, 999, 404, "Table media has no entry with id=999"],
         [1, {"type": "audio"}, 1, 422, None],
-        [1, {"type": "image"}, 1, 422, None],
         [1, {"type": "image"}, 0, 422, None],
     ],
 )
@@ -174,7 +166,6 @@ async def test_update_media(test_app_asyncio, init_test_db, test_db,
         [None, 1, 401, "Not authenticated"],
         [0, 1, 403, "Your access scope is not compatible with this operation."],
         [1, 1, 200, None],
-        [2, 1, 403, "Your access scope is not compatible with this operation."],
         [1, 999, 404, "Table media has no entry with id=999"],
         [1, 0, 422, None],
     ],
@@ -214,7 +205,7 @@ async def test_upload_media(test_app_asyncio, init_test_db, test_db, monkeypatch
     # 2 - Upload something
     async def mock_upload_file(bucket_key, file_binary):
         return True
-    monkeypatch.setattr(bucket_service, "upload_file", mock_upload_file)
+    monkeypatch.setattr(media_bucket, "upload_file", mock_upload_file)
 
     # Download and save a temporary file
     local_tmp_path = os.path.join(tempfile.gettempdir(), "my_temp_image.jpg")
@@ -224,11 +215,11 @@ async def test_upload_media(test_app_asyncio, init_test_db, test_db, monkeypatch
 
     async def mock_get_file(bucket_key):
         return local_tmp_path
-    monkeypatch.setattr(bucket_service, "get_file", mock_get_file)
+    monkeypatch.setattr(media_bucket, "get_file", mock_get_file)
 
     async def mock_delete_file(filename):
         return True
-    monkeypatch.setattr(bucket_service, "delete_file", mock_delete_file)
+    monkeypatch.setattr(media_bucket, "delete_file", mock_delete_file)
 
     # Switch content-type from JSON to multipart
     del admin_auth["Content-Type"]
@@ -247,6 +238,6 @@ async def test_upload_media(test_app_asyncio, init_test_db, test_db, monkeypatch
     # 2b - Upload failing
     async def failing_upload(bucket_key, file_binary):
         return False
-    monkeypatch.setattr(bucket_service, "upload_file", failing_upload)
+    monkeypatch.setattr(media_bucket, "upload_file", failing_upload)
     response = await test_app_asyncio.post(f"/media/{new_media_id}/upload", files=dict(file='bar'), headers=admin_auth)
     assert response.status_code == 500

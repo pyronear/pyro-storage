@@ -38,7 +38,6 @@ class Media(Base):  # type: ignore[valid-type,misc]
     __tablename__ = "media"
 
     id = Column(Integer, primary_key=True)
-    device_id = Column(Integer, ForeignKey("devices.id"))
     bucket_key = Column(String(100), nullable=True)
     type = Column(Enum(MediaType), default=MediaType.image)
     created_at = Column(DateTime, default=func.now())

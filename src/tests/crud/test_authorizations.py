@@ -55,8 +55,8 @@ async def test_admin_access(test_app_asyncio, init_test_db, access_id, expected_
 @pytest.mark.parametrize(
     "access_id, should_raise",
     [
-        [1, False],
-        [2, True],  # Because Admin
+        [1, True],
+        [2, False],  # Because Admin
     ],
 )
 @pytest.mark.asyncio

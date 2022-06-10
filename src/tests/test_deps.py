@@ -29,10 +29,10 @@ async def init_test_db(monkeypatch, test_db):
 @pytest.mark.parametrize(
     "token_data, scope, expected_access, exception",
     [
-        [ACCESS_TABLE[3], 'admin', None, True],  # Unsufficient scope
+        [ACCESS_TABLE[0], 'user', 0, False],
         ['my_false_token', 'admin', None, True],  # Decoding failure
         [{"id": 100, "scope": "admin"}, 'admin', None, True],  # Unable to find access in table
-        [ACCESS_TABLE[3], 'device', 3, False],  # Correct
+        [ACCESS_TABLE[3], 'admin', 3, False],  # Correct
     ],
 )
 @pytest.mark.asyncio

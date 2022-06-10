@@ -9,7 +9,7 @@ from fastapi import APIRouter, Path, Security, status
 
 from app.api import crud
 from app.api.deps import get_current_access
-from app.api.schemas import AccessAuth, AccessRead, AccessType, AnnotationOut, Cred
+from app.api.schemas import AccessAuth, AccessRead, AccessType, Cred
 from app.db import accesses
 
 router = APIRouter()
@@ -17,17 +17,14 @@ router = APIRouter()
 
 @router.post("/", response_model=AccessRead, status_code=status.HTTP_201_CREATED,
              summary="Create an access")
-async def create_access(
-    payload: AccessAuth,
-    _=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
-):
+async def create_access(payload: AccessAuth, _=Security(get_current_access, scopes=[AccessType.admin])):
     """
     Creates an annotation related to specific media, based on media_id as argument
 
     Below, click on "Schema" for more detailed information about arguments
     or "Example Value" to get a concrete idea of arguments
     """
-    return await crud.post_access(accesses, **payload.dict())
+    return await crud.accesses.post_access(accesses, **payload.dict())
 
 
 @router.get("/{access_id}/", response_model=AccessRead, summary="Get information about a specific access")
@@ -57,10 +54,10 @@ async def update_access_pwd(
     """
     Based on a access_id, updates information about the specified access
     """
-    await crud.update_access_pwd(accesses, payload, access_id)
+    await crud.accesses.update_access_pwd(accesses, payload, access_id)
 
 
-@router.delete("/{access_id}/", response_model=AnnotationOut, summary="Delete a specific access")
+@router.delete("/{access_id}/", response_model=AccessRead, summary="Delete a specific access")
 async def delete_access(
     access_id: int = Path(..., gt=0),
     _=Security(get_current_access, scopes=[AccessType.admin])
@@ -68,4 +65,5 @@ async def delete_access(
     """
     Based on a access_id, deletes the specified access
     """
-    return await crud.delete_entry(accesses, access_id)
+    entry = await crud.delete_entry(accesses, access_id)
+    return AccessRead(**entry)

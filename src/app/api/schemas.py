@@ -89,7 +89,6 @@ class MediaUrl(BaseModel):
 # Annotation
 class AnnotationIn(BaseModel):
     media_id: int = Field(..., gt=0)
-    type: MediaType = MediaType.image
 
 
 class AnnotationCreation(AnnotationIn):

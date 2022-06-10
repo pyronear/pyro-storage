@@ -9,17 +9,16 @@ import tempfile
 from datetime import datetime
 
 import pytest
-import requests
 
 from app import db
 from app.api import crud
-from app.services import bucket_service
+from app.services import annotations_bucket
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
 
 ACCESS_TABLE = [
-    {"id": 1, "group_id": 1, "login": "first_login", "hashed_password": "hashed_pwd", "scope": "user"},
-    {"id": 2, "group_id": 1, "login": "second_login", "hashed_password": "hashed_pwd", "scope": "admin"},
+    {"id": 1, "login": "first_login", "hashed_password": "hashed_pwd", "scope": "user"},
+    {"id": 2, "login": "second_login", "hashed_password": "hashed_pwd", "scope": "admin"},
 ]
 
 MEDIA_TABLE = [
@@ -28,7 +27,7 @@ MEDIA_TABLE = [
 ]
 
 ANNOTATIONS_TABLE = [
-    {"id": 1, "annotation_id": 1, "created_at": "2020-10-13T08:18:45.447773"},
+    {"id": 1, "media_id": 1, "bucket_key": "dummy_key", "created_at": "2020-10-13T08:18:45.447773"},
 ]
 
 
@@ -49,12 +48,10 @@ async def init_test_db(monkeypatch, test_db):
     "access_idx, annotation_id, status_code, status_details",
     [
         [None, 1, 401, "Not authenticated"],
-        [0, 1, 200, None],
+        [0, 1, 403, "This access can't read resources"],
         [1, 1, 200, None],
-        [2, 1, 403, "Your access scope is not compatible with this operation."],
         [1, 999, 404, "Table annotations has no entry with id=999"],
         [1, 0, 422, None],
-        [4, 1, 403, "This access can't read resources from group_id=1"],
     ],
 )
 @pytest.mark.asyncio
@@ -71,16 +68,15 @@ async def test_get_annotation(test_app_asyncio, init_test_db, access_idx, annota
         assert response.json()['detail'] == status_details
 
     if response.status_code // 100 == 2:
-        assert response.json() == ANNOTATIONS_TABLE[annotation_id - 1]
+        assert response.json() == {k: v for k, v in ANNOTATIONS_TABLE[annotation_id - 1].items() if k != "bucket_key"}
 
 
 @pytest.mark.parametrize(
     "access_idx, status_code, status_details, expected_results",
     [
         [None, 401, "Not authenticated", None],
-        [0, 200, None, [ANNOTATIONS_TABLE[0]]],
-        [1, 200, None, ANNOTATIONS_TABLE],
-        [2, 403, "Your access scope is not compatible with this operation.", None],
+        [0, 200, None, []],
+        [1, 200, None, [{k: v for k, v in elt.items() if k != "bucket_key"} for elt in ANNOTATIONS_TABLE]],
     ],
 )
 @pytest.mark.asyncio
@@ -104,11 +100,10 @@ async def test_fetch_annotations(test_app_asyncio, init_test_db, access_idx, sta
 @pytest.mark.parametrize(
     "access_idx, payload, status_code, status_details",
     [
-        [None, {}, 401, "Not authenticated"],
-        [0, {}, 403, "Your access scope is not compatible with this operation."],
-        [1, {}, 201, None],
-        [2, {}, 403, "Your access scope is not compatible with this operation."],
-        [1, {"type": "device"}, 422, None],
+        [None, {"media_id": 1}, 401, "Not authenticated"],
+        [0, {"media_id": 1}, 201, None],
+        [1, {"media_id": 1}, 201, None],
+        [1, {"media_id": "alpha"}, 422, None],
         [1, {}, 422, None],
     ],
 )
@@ -129,7 +124,7 @@ async def test_create_annotation(test_app_asyncio, init_test_db, test_db, access
 
     if response.status_code // 100 == 2:
         json_response = response.json()
-        test_response = {"id": len(ANNOTATIONS_TABLE) + 1, **payload, "type": "image"}
+        test_response = {"id": len(ANNOTATIONS_TABLE) + 1, **payload}
         assert {k: v for k, v in json_response.items() if k != 'created_at'} == test_response
 
         new_annotation = await get_entry(test_db, db.annotations, json_response["id"])
@@ -142,16 +137,13 @@ async def test_create_annotation(test_app_asyncio, init_test_db, test_db, access
 @pytest.mark.parametrize(
     "access_idx, payload, annotation_id, status_code, status_details",
     [
-        [None, {}, 1, 401, "Not authenticated"],
-        [0, {"type": "video"}, 1, 403, "Your access scope is not compatible with this operation."],
-        [1, {"type": "video"}, 1, 200, None],
-        [2, {"type": "video"}, 1, 403, "Your access scope is not compatible with this operation."],
+        [None, {"media_id": 1}, 1, 401, "Not authenticated"],
+        [0, {"media_id": 1}, 1, 403, "Your access scope is not compatible with this operation."],
+        [1, {"media_id": 1}, 1, 200, None],
         [1, {}, 1, 422, None],
-        [1, {"type": "audio"}, 1, 422, None],
-        [1, {"type": "image"}, 999, 404, "Table annotations has no entry with id=999"],
-        [1, {"type": "audio"}, 1, 422, None],
-        [1, {"type": "image"}, 1, 422, None],
-        [1, {"type": "image"}, 0, 422, None],
+        [1, {"media_id": "alpha"}, 1, 422, None],
+        [1, {"media_id": 1}, 999, 404, "Table annotations has no entry with id=999"],
+        [1, {"media_id": 1}, 0, 422, None],
     ],
 )
 @pytest.mark.asyncio
@@ -182,7 +174,6 @@ async def test_update_annotation(test_app_asyncio, init_test_db, test_db,
         [None, 1, 401, "Not authenticated"],
         [0, 1, 403, "Your access scope is not compatible with this operation."],
         [1, 1, 200, None],
-        [2, 1, 403, "Your access scope is not compatible with this operation."],
         [1, 999, 404, "Table annotations has no entry with id=999"],
         [1, 0, 422, None],
     ],
@@ -202,7 +193,7 @@ async def test_delete_annotation(test_app_asyncio, init_test_db, access_idx, ann
         assert response.json()['detail'] == status_details
 
     if response.status_code // 100 == 2:
-        assert response.json() == ANNOTATIONS_TABLE[annotation_id - 1]
+        assert response.json() == {k: v for k, v in ANNOTATIONS_TABLE[annotation_id - 1].items() if k != "bucket_key"}
         remaining_annotation = await test_app_asyncio.get("/annotations/", headers=auth)
         assert all(entry['id'] != annotation_id for entry in remaining_annotation.json())
 
@@ -214,8 +205,8 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     # Create a custom access token
     admin_auth = await pytest.get_token(ACCESS_TABLE[admin_idx]['id'], ACCESS_TABLE[admin_idx]['scope'].split())
 
-    # 1 - Create a media that will have an upload
-    payload = {}
+    # 1 - Create a annotation that will have an upload
+    payload = {"media_id": 2}
     new_annotation_id = len(ANNOTATIONS_TABLE_FOR_DB) + 1
     response = await test_app_asyncio.post("/annotations/", data=json.dumps(payload), headers=admin_auth)
     assert response.status_code == 201
@@ -223,27 +214,28 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     # 2 - Upload something
     async def mock_upload_file(bucket_key, file_binary):
         return True
-    monkeypatch.setattr(bucket_service, "upload_file", mock_upload_file)
+    monkeypatch.setattr(annotations_bucket, "upload_file", mock_upload_file)
 
     # Download and save a temporary file
-    local_tmp_path = os.path.join(tempfile.gettempdir(), "my_temp_image.jpg")
-    img_content = requests.get("https://pyronear.org/img/logo_letters.png").content
-    with open(local_tmp_path, 'wb') as f:
-        f.write(img_content)
+    local_tmp_path = os.path.join(tempfile.gettempdir(), "my_temp_annotation.json")
+    data = {"label": "fire"}
+    with open(local_tmp_path, 'w') as f:
+        json.dump(data, f)
 
     async def mock_get_file(bucket_key):
         return local_tmp_path
-    monkeypatch.setattr(bucket_service, "get_file", mock_get_file)
+    monkeypatch.setattr(annotations_bucket, "get_file", mock_get_file)
 
     async def mock_delete_file(filename):
         return True
-    monkeypatch.setattr(bucket_service, "delete_file", mock_delete_file)
+    monkeypatch.setattr(annotations_bucket, "delete_file", mock_delete_file)
 
     # Switch content-type from JSON to multipart
     del admin_auth["Content-Type"]
 
-    response = await test_app_asyncio.post(f"/annotations/{new_annotation_id}/upload",
-                                           files=dict(file=img_content), headers=admin_auth)
+    with open(local_tmp_path, 'r') as content:
+        response = await test_app_asyncio.post(f"/annotations/{new_annotation_id}/upload",
+                                               files=dict(file=content), headers=admin_auth)
 
     assert response.status_code == 200, print(response.json()['detail'])
     response_json = response.json()
@@ -256,7 +248,7 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     # 2b - Upload failing
     async def failing_upload(bucket_key, file_binary):
         return False
-    monkeypatch.setattr(bucket_service, "upload_file", failing_upload)
+    monkeypatch.setattr(annotations_bucket, "upload_file", failing_upload)
     response = await test_app_asyncio.post(f"/annotations/{new_annotation_id}/upload", files=dict(file='bar'),
                                            headers=admin_auth)
     assert response.status_code == 500
