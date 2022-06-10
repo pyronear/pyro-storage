@@ -40,13 +40,13 @@ jobs:
         run: docker-compose up -d --build
       - name: Install dependencies in docker
         run: |
-          docker-compose exec -T pyroapi python -m pip install --upgrade pip
-          docker-compose exec -T pyroapi pip install -r requirements-dev.txt
+          docker-compose exec -T pyrostorage python -m pip install --upgrade pip
+          docker-compose exec -T pyrostorage pip install -r requirements-dev.txt
       - name: Run docker test
         run: |
-          docker-compose exec -T pyroapi coverage --version
-          docker-compose exec -T pyroapi coverage run -m pytest tests/
-          docker-compose exec -T pyroapi coverage xml
+          docker-compose exec -T pyrostorage coverage --version
+          docker-compose exec -T pyrostorage coverage run -m pytest tests/
+          docker-compose exec -T pyrostorage coverage xml
           docker cp pyro-storage_pyrostorage_1:/app/coverage.xml .
 
       - name: Upload coverage to Codecov
