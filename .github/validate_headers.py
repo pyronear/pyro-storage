@@ -22,7 +22,7 @@ HEADERS = [
 
 
 IGNORED_FILES = ["version.py", "__init__.py"]
-FOLDERS = ["src/app"]
+FOLDERS = ["src/app", "client/pyrostorage"]
 
 
 def main():

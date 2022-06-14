@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python: [3.7]
+        python: [3.8]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -31,7 +31,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python: [3.7]
+        python: [3.8]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -43,7 +43,7 @@ jobs:
         run: |
           pip install isort
           isort --version
-          isort .
+          isort src/
           if [ -n "$(git status --porcelain --untracked-files=no)" ]; then exit 1; else echo "All clear"; fi
 
   mypy:
@@ -51,7 +51,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python: [3.7]
+        python: [3.8]
     steps:
       - uses: actions/checkout@v2
       - name: Set up Python
@@ -63,7 +63,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pkg-deps-${{ matrix.python }}-${{ hashFiles('src/app/requirements.txt') }}
+          key: ${{ runner.os }}-python-${{ matrix.python }}-${{ hashFiles('src/app/requirements.txt') }}
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
