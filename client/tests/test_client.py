@@ -2,9 +2,10 @@ import time
 from copy import deepcopy
 
 import pytest
+from requests import ConnectionError
+
 from pyrostorage import client
 from pyrostorage.exceptions import HTTPRequestException
-from requests import ConnectionError
 
 
 def _test_route_return(response, return_type, status_code=200):
