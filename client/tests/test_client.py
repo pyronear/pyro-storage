@@ -28,7 +28,7 @@ def test_client():
     api_client = client.Client("http://localhost:8080", "dummy_login", "dummy_pwd")
 
     # Media
-    media_id = _test_route_return(api_client.create_media(type="image"), dict, 201)["id"]
+    media_id = _test_route_return(api_client.create_media(media_type="image"), dict, 201)["id"]
     # Annotation
     _test_route_return(api_client.create_annotation(media_id=media_id), dict, 201)["id"]
 
