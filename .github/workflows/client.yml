@@ -1,4 +1,4 @@
-name: builds
+name: client
 
 on:
   push:
@@ -67,6 +67,37 @@ jobs:
           coverage --version
           sleep 5
           cd client && coverage run -m pytest tests/
+
+  docs:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python: [3.8]
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@v1
+        with:
+          python-version: ${{ matrix.python }}
+          architecture: x64
+      - name: Cache python modules
+        uses: actions/cache@v2
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-python-${{ matrix.python }}-${{ hashFiles('client/pyproject.toml') }}-docs
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e "client/.[docs]"
+
+      - name: Build documentation
+        run: sphinx-build client/docs/source client/docs/build -a -v
+
+      - name: Documentation sanity check
+        run: test -e client/docs/build/index.html || exit
 
   flake8:
     runs-on: ${{ matrix.os }}
