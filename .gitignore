@@ -130,3 +130,5 @@ dmypy.json
 
 # Version
 client/pyrostorage/version.py
+client/docs/_build
+client/docs/build

@@ -27,7 +27,8 @@ import pyrostorage
 
 master_doc = "index"
 project = "pyrostorage"
-copyright = f"2022-{datetime.now().year}, Pyronear"
+_copyright_str = f"-{datetime.now().year}" if datetime.now().year > 2022 else ""
+copyright = f"2022{_copyright_str}, Pyronear"
 author = "Pyronear"
 
 # The full version, including alpha/beta/rc tags
@@ -93,7 +94,8 @@ html_theme_options = {
         },
     ],
     "source_repository": "https://github.com/pyronear/pyro-storage/",
-    "sidebar_hide_name": True,
+    "source_branch": "main",
+    "sidebar_hide_name": False,
 }
 
 
