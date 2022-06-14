@@ -2,8 +2,8 @@ import time
 from copy import deepcopy
 
 import pytest
-from pyroclient import client
-from pyroclient.exceptions import HTTPRequestException
+from pyrostorage import client
+from pyrostorage.exceptions import HTTPRequestException
 from requests import ConnectionError
 
 
