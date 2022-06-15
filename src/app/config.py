@@ -10,7 +10,7 @@ from typing import Optional
 PROJECT_NAME: str = "Pyronear - Storage API"
 PROJECT_DESCRIPTION: str = "API for wildfire data curation"
 API_BASE: str = "storage/"
-VERSION: str = "0.1.0.dev0"
+VERSION: str = "0.1.1.dev0"
 DEBUG: bool = os.environ.get("DEBUG", "") != "False"
 DATABASE_URL: str = os.getenv("DATABASE_URL", "")
 # Fix for SqlAlchemy 1.4+
