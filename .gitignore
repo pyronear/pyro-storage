@@ -132,3 +132,4 @@ dmypy.json
 client/pyrostorage/version.py
 client/docs/_build
 client/docs/build
+client/conda-dist
