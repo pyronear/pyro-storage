@@ -29,7 +29,7 @@ If you wish to deploy this project on a server hosted remotely, you might want t
 QARNOT_TOKEN=my_very_secret_token
 BUCKET_NAME=my_storage_bucket_name
 BUCKET_MEDIA_FOLDER=my/media/subfolder
-BUCKET_ANNOTATIONS_FOLDER=my/annotations/subfolder
+BUCKET_ANNOT_FOLDER=my/annotations/subfolder
 
 ```
 
@@ -58,4 +58,4 @@ Please refer to `CONTRIBUTING` if you wish to contribute to this project.
 
 ## License
 
-Distributed under the Apache 2.0 License. See `LICENSE` for more information.
+Distributed under the Apache 2.0 License. See [`LICENSE`](LICENSE) for more information.
