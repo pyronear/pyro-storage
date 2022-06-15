@@ -64,7 +64,7 @@ api_client.upload_annotation(annotation_id=annotation_id, annotation_data=annot_
 
 ## License
 
-Distributed under the Apache 2.0 License. See `LICENSE` for more information.
+Distributed under the Apache 2.0 License. See [`LICENSE`](LICENSE) for more information.
 
 
 
