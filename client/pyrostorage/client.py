@@ -29,8 +29,8 @@ ROUTES: Dict[str, str] = {
     # ANNOTATIONS
     #################
     "create-annotation": "/annotations",
-    "upload-annotation": "/annotations/{media_id}/upload",
-    "get-annotation-url": "/annotations/{media_id}/url",
+    "upload-annotation": "/annotations/{annotation_id}/upload",
+    "get-annotation-url": "/annotations/{annotation_id}/url",
 }
 
 
