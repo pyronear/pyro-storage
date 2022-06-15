@@ -52,7 +52,7 @@ The full project documentation is available [here](http://pyro-storage.herokuapp
 
 ## Contributing
 
-Please refer to `CONTRIBUTING` if you wish to contribute to this project.
+Please refer to [`CONTRIBUTING`](CONTRIBUTING) if you wish to contribute to this project.
 
 
 

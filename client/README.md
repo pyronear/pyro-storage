@@ -1,26 +1,36 @@
 # API Client
 
-![Build Status](https://github.com/pyronear/pyro-storage/workflows/client/badge.svg)  [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](http://pyronear.org/pyro-storage)
+![Build Status](https://github.com/pyronear/pyro-storage/workflows/client/badge.svg)  [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](http://pyronear.org/pyro-storage) [![PyPI version shields.io](https://img.shields.io/pypi/v/pyrostorage.svg)](https://pypi.python.org/pypi/pyrostorage/) [![Anaconda-Server Badge](https://anaconda.org/pyronear/pyrostorage/badges/version.svg)](https://anaconda.org/pyronear/pyrostorage) 
 
 Client for the [data curation API](https://github.com/pyronear/pyro-storage)
 
 
-## Getting started
+## Setup
 
-### Prerequisites
+Python 3.7 (or higher) and [pip](https://pip.pypa.io/en/stable/)/[conda](https://docs.conda.io/en/latest/miniconda.html) are required to install TorchCAM.
 
-- Python 3.6 (or more recent)
-- [pip](https://pip.pypa.io/en/stable/)
+### Stable release
 
-### Installation
+You can install the last stable release of the package using [pypi](https://pypi.org/project/pyrostorage/) as follows:
 
-You can clone and install the project dependencies as follows:
-
-```bash
-$git clone https://github.com/pyronear/pyro-storage.git
-$pip install -e pyro-storage/client/.
+```shell
+pip install pyrostorage
 ```
 
+or using [conda](https://anaconda.org/pyronear/pyrostorage):
+
+```shell
+conda install -c pyronear pyrostorage
+```
+
+### Developer installation
+
+Alternatively, if you wish to use the latest features of the project that haven't made their way to a release yet, you can install the package from source:
+
+```shell
+git clone https://github.com/pyronear/pyro-storage.git
+pip install -e pyro-storage/client/.
+```
 
 
 ## Usage

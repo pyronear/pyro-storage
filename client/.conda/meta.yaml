@@ -29,12 +29,10 @@ test:
     - python
 
 about:
-  home: {{ data.get('url') }}
-  license: {{ data['license'] }}
-  license_url: https://github.com/pyronear/pyro-storage/blob/master/LICENSE
+  home: https://github.com/pyronear/pyro-storage
+  license: Apache
+  license_url: https://github.com/pyronear/pyro-storage/blob/main/client/LICENSE
   license_file: LICENSE
-  summary: {{ data['description'] }}
-  description: |
-    {{ data['long_description'] | replace("\n", "\n    ") | replace("#", '\#')}}
+  summary: Python Client for Pyronear data curation API
   doc_url: https://pyronear.org/pyro-storage/
-  dev_url: {{ data.get('url') }}
+  dev_url: https://github.com/pyronear/pyro-storage
