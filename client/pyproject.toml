@@ -6,8 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "pyrostorage"
 description = "Python Client for Pyronear data curation API"
 authors = [
-    {email = "contact@pyronear.org"},
-    {name = "Pyronear"}
+    {name = "Pyronear", email = "contact@pyronear.org"}
 ]
 readme = "README.md"
 requires-python = ">=3.6,<4"
