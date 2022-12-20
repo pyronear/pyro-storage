@@ -28,7 +28,7 @@ jobs:
           docker cp pyro-storage_backend_1:/app/coverage-src.xml .
       - uses: actions/upload-artifact@v2
         with:
-          name: coverage-src.xml
+          name: report-src
           path: ./coverage-src.xml
           if-no-files-found: error
 
@@ -70,7 +70,7 @@ jobs:
           cd client && coverage run -m pytest tests/ && coverage xml -o coverage-client.xml
       - uses: actions/upload-artifact@v2
         with:
-          name: coverage-client.xml
+          name: report-client
           path: ./client/coverage-client.xml
           if-no-files-found: error
 
@@ -78,18 +78,17 @@ jobs:
     runs-on: ubuntu-latest
     needs: [ pytest, pytest-client ]
     steps:
-      - uses: actions/checkout@v2
       - uses: actions/download-artifact@v2
       - name: Upload src coverage
         uses: codecov/codecov-action@v1
         with:
-          files: coverage-src.xml
+          files: report-src/coverage-src.xml
           flags: unittests
           fail_ci_if_error: true
       - name: Upload client coverage
         uses: codecov/codecov-action@v1
         with:
-          files: coverage-client.xml
+          files: report-client/coverage-client.xml
           flags: client
           fail_ci_if_error: true
 
