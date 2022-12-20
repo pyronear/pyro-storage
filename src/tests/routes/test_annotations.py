@@ -9,6 +9,7 @@ import tempfile
 from datetime import datetime
 
 import pytest
+import pytest_asyncio
 
 from app import db
 from app.api import crud
@@ -35,7 +36,7 @@ MEDIA_TABLE_FOR_DB = list(map(update_only_datetime, MEDIA_TABLE))
 ANNOTATIONS_TABLE_FOR_DB = list(map(update_only_datetime, ANNOTATIONS_TABLE))
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def init_test_db(monkeypatch, test_db):
     monkeypatch.setattr(crud.base, "database", test_db)
     monkeypatch.setattr(db, "SessionLocal", TestSessionLocal)
@@ -240,7 +241,7 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     # Switch content-type from JSON to multipart
     del admin_auth["Content-Type"]
 
-    with open(local_tmp_path, "r") as content:
+    with open(local_tmp_path, "rb") as content:
         response = await test_app_asyncio.post(
             f"/annotations/{new_annotation_id}/upload", files=dict(file=content), headers=admin_auth
         )
