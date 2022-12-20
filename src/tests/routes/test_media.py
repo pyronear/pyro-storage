@@ -9,6 +9,7 @@ import tempfile
 from datetime import datetime
 
 import pytest
+import pytest_asyncio
 import requests
 
 from app import db
@@ -31,7 +32,7 @@ MEDIA_TABLE = [
 MEDIA_TABLE_FOR_DB = list(map(update_only_datetime, MEDIA_TABLE))
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def init_test_db(monkeypatch, test_db):
     monkeypatch.setattr(crud.base, "database", test_db)
     monkeypatch.setattr(db, "SessionLocal", TestSessionLocal)

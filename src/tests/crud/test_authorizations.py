@@ -4,6 +4,7 @@
 # See LICENSE or go to <https://opensource.org/licenses/Apache-2.0> for full license details.
 
 import pytest
+import pytest_asyncio
 from fastapi import HTTPException
 
 from app import db
@@ -31,7 +32,7 @@ MEDIA_TABLE_FOR_DB = list(map(update_only_datetime, MEDIA_TABLE))
 ANNOTATIONS_TABLE_FOR_DB = list(map(update_only_datetime, ANNOTATIONS_TABLE))
 
 
-@pytest.fixture(scope="function")
+@pytest_asyncio.fixture(scope="function")
 async def init_test_db(monkeypatch, test_db):
     monkeypatch.setattr(crud.base, "database", test_db)
     await fill_table(test_db, db.accesses, ACCESS_TABLE)
