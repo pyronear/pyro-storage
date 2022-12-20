@@ -7,12 +7,31 @@ on:
     branches: main
 
 jobs:
-  install:
+  docker:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build & run docker
+        env:
+          QARNOT_TOKEN: ${{ secrets.QARNOT_TOKEN }}
+          BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
+          BUCKET_MEDIA_FOLDER: ${{ secrets.BUCKET_MEDIA_FOLDER }}
+          BUCKET_ANNOT_FOLDER: ${{ secrets.BUCKET_ANNOT_FOLDER }}
+        run: docker-compose up -d --build
+      - name: Docker sanity check
+        run: sleep 10 && nc -vz localhost 8080
+      - name: Ping server
+        run: curl http://localhost:8080/docs
+
+  client:
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        os: [ubuntu-latest, macos-latest]
         python: [3.7, 3.8]
     steps:
       - uses: actions/checkout@v2
@@ -25,8 +44,10 @@ jobs:
         uses: actions/cache@v2
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-python-${{ matrix.python }}-${{ hashFiles('src/app/requirements.txt') }}
+          key: ${{ runner.os }}-python-${{ matrix.python }}-${{ hashFiles('client/pyproject.toml') }}
       - name: Install project
         run: |
           python -m pip install --upgrade pip
-          pip install -r src/app/requirements.txt
+          pip install -e client/.
+      - name: Import package
+        run: python -c "import pyrostorage; print(pyrostorage.__version__)"
