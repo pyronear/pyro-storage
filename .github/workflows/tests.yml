@@ -28,7 +28,7 @@ jobs:
           docker cp pyro-storage_backend_1:/app/coverage-src.xml .
       - uses: actions/upload-artifact@v2
         with:
-          name: coverage-src
+          name: coverage-src.xml
           path: ./coverage-src.xml
           if-no-files-found: error
 
@@ -70,7 +70,7 @@ jobs:
           cd client && coverage run -m pytest tests/ && coverage xml -o coverage-client.xml
       - uses: actions/upload-artifact@v2
         with:
-          name: coverage-client
+          name: coverage-client.xml
           path: ./client/coverage-client.xml
           if-no-files-found: error
 
