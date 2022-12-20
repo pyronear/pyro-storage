@@ -89,4 +89,5 @@ jobs:
           owner: 'Pyronear'
           starting-year: 2022
           folders: 'src,client,.github'
-          ignores: 'version.py,__init__.py'
+          ignore-files: 'version.py,__init__.py'
+          ignore-folders: 'client/tests/,src/tests/'
