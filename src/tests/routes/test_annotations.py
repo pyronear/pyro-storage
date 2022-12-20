@@ -241,7 +241,7 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     # Switch content-type from JSON to multipart
     del admin_auth["Content-Type"]
 
-    with open(local_tmp_path, "r") as content:
+    with open(local_tmp_path, "rb") as content:
         response = await test_app_asyncio.post(
             f"/annotations/{new_annotation_id}/upload", files=dict(file=content), headers=admin_auth
         )
