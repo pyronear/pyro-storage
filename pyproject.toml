@@ -77,7 +77,7 @@ select = "D300,D301,D417"
 match = ".*\\.py"
 
 [tool.coverage.run]
-source = ["src/app"]
+source = ["src/app", "client/pyrostorage"]
 
 [tool.black]
 line-length = 120

@@ -117,9 +117,6 @@ known_first_party = ["pyrostorage"]
 select = "D300,D301,D417"
 match = ".*\\.py"
 
-[tool.coverage.run]
-source = ["client"]
-
 [tool.black]
 line-length = 120
 target-version = ['py38']
