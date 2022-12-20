@@ -1,6 +1,6 @@
 # API Client
 
-![Build Status](https://github.com/pyronear/pyro-storage/workflows/client/badge.svg)  [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](http://pyronear.org/pyro-storage) [![PyPI version shields.io](https://img.shields.io/pypi/v/pyrostorage.svg)](https://pypi.python.org/pypi/pyrostorage/) [![Anaconda-Server Badge](https://anaconda.org/pyronear/pyrostorage/badges/version.svg)](https://anaconda.org/pyronear/pyrostorage) 
+![Build Status](https://github.com/pyronear/pyro-storage/workflows/client/badge.svg)  [![Docs](https://img.shields.io/badge/docs-available-blue.svg)](http://pyronear.org/pyro-storage) [![PyPI version shields.io](https://img.shields.io/pypi/v/pyrostorage.svg)](https://pypi.python.org/pypi/pyrostorage/) [![Anaconda-Server Badge](https://anaconda.org/pyronear/pyrostorage/badges/version.svg)](https://anaconda.org/pyronear/pyrostorage)
 
 Client for the [data curation API](https://github.com/pyronear/pyro-storage)
 
@@ -81,4 +81,3 @@ Distributed under the Apache 2.0 License. See [`LICENSE`](LICENSE) for more info
 ## Documentation
 
 The full project documentation is available [here](http://pyronear.org/pyro-storage) for detailed specifications. The documentation was built with [Sphinx](https://www.sphinx-doc.org/) using a [theme](https://github.com/readthedocs/sphinx_rtd_theme) provided by [Read the Docs](https://readthedocs.org/).
-
