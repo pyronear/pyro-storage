@@ -89,6 +89,8 @@ zip-safe = true
 [tool.setuptools.packages.find]
 exclude = ["docs*", "scripts*", "tests*"]
 
+[tool.coverage.run]
+source = ["pyrostorage"]
 
 [tool.mypy]
 files = "pyrostorage/"
