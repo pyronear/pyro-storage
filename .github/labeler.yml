@@ -1,0 +1,56 @@
+'ext: client/tests':
+- client/tests/*
+
+'ext: client/docs':
+- client/docs/*
+
+'ext: client':
+- client/pyrostorage/*
+
+'ext: tests':
+- src/tests/*
+
+'module: database':
+- src/app/db/*
+
+'module: services':
+- src/app/services/*
+
+'route: accesses':
+- src/app/api/routes/accesses.py
+- src/app/api/crud/accesses.py
+
+'route: annotations':
+- src/app/api/routes/annotations.py
+
+'route: login':
+- src/app/api/routes/login.py
+
+'route: media':
+- src/app/api/routes/media.py
+
+'topic: build':
+- src/app/requirements.txt
+- pyproject.toml
+- client/pyproject.toml
+- client/setup.py
+
+'topic: ci':
+- .github/*
+
+'topic: docker':
+- docker-compose.yml
+- src/Dockerfile
+
+'topic: documentation':
+- README.md
+- CONTRIBUTING.md
+- CODE_OF_CONDUCT.md
+- client/README.md
+
+'topic: nginx':
+- nginx/*
+
+'topic: security':
+- src/app/api/deps.py
+- src/app/api/security.py
