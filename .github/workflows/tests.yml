@@ -20,21 +20,20 @@ jobs:
         run: docker-compose up -d --build
       - name: Install dependencies in docker
         run: |
-          docker-compose exec -T pyrostorage python -m pip install --upgrade pip
-          docker-compose exec -T pyrostorage pip install -r requirements-dev.txt
+          docker-compose exec -T backend python -m pip install --upgrade pip
+          docker-compose exec -T backend pip install -r requirements-dev.txt
       - name: Run docker test
         run: |
-          docker-compose exec -T pyrostorage coverage --version
-          docker-compose exec -T pyrostorage coverage run -m pytest tests/
-          docker-compose exec -T pyrostorage coverage xml
-          docker cp pyro-storage_pyrostorage_1:/app/coverage.xml .
+          docker-compose exec -T backend coverage --version
+          docker-compose exec -T backend coverage run -m pytest tests/
+          docker-compose exec -T backend coverage xml -o coverage-src.xml
+          docker cp pyro-storage_backend_1:/app/coverage-src.xml .
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+      - uses: actions/upload-artifact@v2
         with:
-          file: ./coverage.xml
-          flags: unittests
-          fail_ci_if_error: true
+          name: coverage-src
+          path: ./coverage-src.xml
+          if-no-files-found: error
 
   pytest-client:
     runs-on: ${{ matrix.os }}
@@ -71,7 +70,24 @@ jobs:
         run: |
           coverage --version
           sleep 5
-          cd client && coverage run -m pytest tests/
+          cd client && coverage run -m pytest tests/ && coverage xml -o coverage-client.xml
+      - uses: actions/upload-artifact@v2
+        with:
+          name: coverage-client
+          path: ./coverage-client.xml
+          if-no-files-found: error
+
+  codecov-upload:
+    runs-on: ubuntu-latest
+    needs: [ pytest, pytest-client ]
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/download-artifact@v2
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v1
+        with:
+          flags: unittests
+          fail_ci_if_error: true
 
   headers:
     runs-on: ${{ matrix.os }}
