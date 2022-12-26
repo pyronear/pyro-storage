@@ -17,24 +17,20 @@ jobs:
           BUCKET_NAME: ${{ secrets.BUCKET_NAME }}
           BUCKET_MEDIA_FOLDER: ${{ secrets.BUCKET_MEDIA_FOLDER }}
           BUCKET_ANNOT_FOLDER: ${{ secrets.BUCKET_ANNOT_FOLDER }}
-        run: docker-compose up -d --build
-      - name: Install dependencies in docker
         run: |
-          docker-compose exec -T pyrostorage python -m pip install --upgrade pip
-          docker-compose exec -T pyrostorage pip install -r requirements-dev.txt
+          docker build src/. -t pyrostorage:python3.8-alpine3.10
+          docker-compose -f docker-compose-dev.yml up -d --build
       - name: Run docker test
         run: |
-          docker-compose exec -T pyrostorage coverage --version
-          docker-compose exec -T pyrostorage coverage run -m pytest tests/
-          docker-compose exec -T pyrostorage coverage xml
-          docker cp pyro-storage_pyrostorage_1:/app/coverage.xml .
-
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+          docker-compose -f docker-compose-dev.yml exec -T backend coverage --version
+          docker-compose -f docker-compose-dev.yml exec -T backend coverage run -m pytest tests/
+          docker-compose -f docker-compose-dev.yml exec -T backend coverage xml -o coverage-src.xml
+          docker cp pyro-storage_backend_1:/app/coverage-src.xml .
+      - uses: actions/upload-artifact@v2
         with:
-          file: ./coverage.xml
-          flags: unittests
-          fail_ci_if_error: true
+          name: report-src
+          path: ./coverage-src.xml
+          if-no-files-found: error
 
   pytest-client:
     runs-on: ${{ matrix.os }}
@@ -71,7 +67,23 @@ jobs:
         run: |
           coverage --version
           sleep 5
-          cd client && coverage run -m pytest tests/
+          cd client && coverage run -m pytest tests/ && coverage xml -o coverage-client.xml
+      - uses: actions/upload-artifact@v2
+        with:
+          name: report-client
+          path: ./client/coverage-client.xml
+          if-no-files-found: error
+
+  codecov-upload:
+    runs-on: ubuntu-latest
+    needs: [ pytest, pytest-client ]
+    steps:
+      - uses: actions/download-artifact@v2
+      - name: Upload src coverage
+        uses: codecov/codecov-action@v1
+        with:
+          flags: unittests
+          fail_ci_if_error: true
 
   headers:
     runs-on: ${{ matrix.os }}
