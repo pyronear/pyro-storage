@@ -82,14 +82,7 @@ jobs:
       - name: Upload src coverage
         uses: codecov/codecov-action@v1
         with:
-          files: report-src/coverage-src.xml
           flags: unittests
-          fail_ci_if_error: true
-      - name: Upload client coverage
-        uses: codecov/codecov-action@v1
-        with:
-          files: report-client/coverage-client.xml
-          flags: client
           fail_ci_if_error: true
 
   headers:
