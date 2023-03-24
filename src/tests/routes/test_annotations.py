@@ -8,6 +8,7 @@ import pytest_asyncio
 
 from app import db
 from app.api import crud
+from app.api.security import hash_content_file
 from app.services import s3_bucket
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
@@ -223,10 +224,12 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     with open(local_tmp_path, "w") as f:
         json.dump(data, f)
 
-    async def mock_get_file(bucket_key):
-        return local_tmp_path
+    md5_hash = hash_content_file(img_content, use_md5=True)
 
-    monkeypatch.setattr(s3_bucket, "get_file", mock_get_file)
+    async def mock_get_file_metadata(bucket_key):
+        return {"ETag": md5_hash}
+
+    monkeypatch.setattr(bucket_service, "get_file_metadata", mock_get_file_metadata)
 
     async def mock_delete_file(filename):
         return True
