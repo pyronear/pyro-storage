@@ -23,7 +23,7 @@ jobs:
           S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
         run: docker-compose up -d --build
       - name: Docker sanity check
-        run: sleep 10 && nc -vz localhost 8080
+        run: sleep 20 && nc -vz localhost 8080
       - name: Ping server
         run: curl http://localhost:8080/docs
 
