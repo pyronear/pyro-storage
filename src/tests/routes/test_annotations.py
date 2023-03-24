@@ -224,12 +224,12 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     with open(local_tmp_path, "w") as f:
         json.dump(data, f)
 
-    md5_hash = hash_content_file(img_content, use_md5=True)
+    md5_hash = hash_content_file(json.dumps(data), use_md5=True)
 
     async def mock_get_file_metadata(bucket_key):
         return {"ETag": md5_hash}
 
-    monkeypatch.setattr(bucket_service, "get_file_metadata", mock_get_file_metadata)
+    monkeypatch.setattr(s3_bucket, "get_file_metadata", mock_get_file_metadata)
 
     async def mock_delete_file(filename):
         return True
