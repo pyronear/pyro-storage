@@ -224,7 +224,8 @@ async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkey
     with open(local_tmp_path, "w") as f:
         json.dump(data, f)
 
-    md5_hash = hash_content_file(json.dumps(data), use_md5=True)
+    with open(local_tmp_path, "rb") as f:
+        md5_hash = hash_content_file(f.read(), use_md5=True)
 
     async def mock_get_file_metadata(bucket_key):
         return {"ETag": md5_hash}
