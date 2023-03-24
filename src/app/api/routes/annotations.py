@@ -13,7 +13,7 @@ from app.api.deps import get_current_access
 from app.api.schemas import AccessType, AnnotationCreation, AnnotationIn, AnnotationOut, AnnotationUrl
 from app.api.security import hash_content_file
 from app.db import annotations
-from app.services import annotations_bucket, resolve_bucket_key
+from app.services import resolve_bucket_key, s3_bucket
 
 router = APIRouter()
 
@@ -106,35 +106,33 @@ async def upload_annotation(
     file_name = f"{file_hash[:32]}.{file.filename.rpartition('.')[-1]}"
     # Reset byte position of the file (cf. https://fastapi.tiangolo.com/tutorial/request-files/#uploadfile)
     await file.seek(0)
+    # Use MD5 to verify upload
+    md5_hash = hash_content_file(file.file.read(), use_md5=True)
+    await file.seek(0)
     # If files are in a subfolder of the bucket, prepend the folder path
-    bucket_key = resolve_bucket_key(file_name, annotations_bucket.folder)
+    bucket_key = resolve_bucket_key(file_name, "annotations")
 
     # Upload if bucket_key is different (otherwise the content is the exact same)
     if isinstance(entry["bucket_key"], str) and entry["bucket_key"] == bucket_key:
         return await crud.get_entry(annotations, annotation_id)
     else:
         # Failed upload
-        if not await annotations_bucket.upload_file(bucket_key=bucket_key, file_binary=file.file):
+        if not await s3_bucket.upload_file(bucket_key=bucket_key, file_binary=file.file):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed upload")
         # Data integrity check
-        uploaded_file = await annotations_bucket.get_file(bucket_key=bucket_key)
-        # Failed download
-        if uploaded_file is None:
+        file_meta = await s3_bucket.get_file_metadata(bucket_key)
+        # Corrupted file
+        if md5_hash != file_meta["ETag"].replace('"', ""):
+            # Delete the corrupted upload
+            await s3_bucket.delete_file(bucket_key)
+            # Raise the exception
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="The data integrity check failed (unable to download media from bucket)",
+                detail="Data was corrupted during upload",
             )
-        # Remove temp local file
-        background_tasks.add_task(annotations_bucket.flush_tmp_file, uploaded_file)
-        # Check the hash
-        with open(uploaded_file, "rb") as f:
-            upload_hash = hash_content_file(f.read())
-        if upload_hash != file_hash:
-            # Delete corrupted file
-            await annotations_bucket.delete_file(bucket_key)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Data was corrupted during upload"
-            )
+        # If a file was previously uploaded, delete it
+        if isinstance(entry["bucket_key"], str):
+            await s3_bucket.delete_file(entry["bucket_key"])
 
         entry_dict = dict(**entry)
         entry_dict["bucket_key"] = bucket_key
@@ -152,5 +150,5 @@ async def get_annotation_url(
     # Check in DB
     annotation_instance = await check_annotation_registration(annotation_id)
     # Check in bucket
-    temp_public_url = await annotations_bucket.get_public_url(annotation_instance["bucket_key"])
+    temp_public_url = await s3_bucket.get_public_url(annotation_instance["bucket_key"])
     return AnnotationUrl(url=temp_public_url)

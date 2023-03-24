@@ -12,14 +12,15 @@ services:
       - DATABASE_URL=postgresql://dummy_pg_user:dummy_pg_pwd@db/dummy_pg_db
       - SUPERUSER_LOGIN=dummy_login
       - SUPERUSER_PWD=dummy_pwd
-      - QARNOT_TOKEN=${QARNOT_TOKEN}
       - BUCKET_NAME=${BUCKET_NAME}
-      - BUCKET_MEDIA_FOLDER=${BUCKET_MEDIA_FOLDER}
-      - BUCKET_ANNOT_FOLDER=${BUCKET_ANNOT_FOLDER}
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY}
+      - S3_SECRET_KEY=${S3_SECRET_KEY}
+      - S3_REGION=${S3_REGION}
+      - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
     depends_on:
       - db
   db:
-    image: postgres:12.1-alpine
+    image: postgres:15-alpine
     volumes:
       - postgres_data:/var/lib/postgresql/data/
     ports:

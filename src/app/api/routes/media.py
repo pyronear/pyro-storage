@@ -13,7 +13,7 @@ from app.api.deps import get_current_access
 from app.api.schemas import AccessType, MediaCreation, MediaIn, MediaOut, MediaUrl
 from app.api.security import hash_content_file
 from app.db import get_session, media
-from app.services import media_bucket, resolve_bucket_key
+from app.services import resolve_bucket_key, s3_bucket
 
 router = APIRouter()
 
@@ -99,35 +99,33 @@ async def upload_media(
     file_name = f"{file_hash[:32]}.{file.filename.rpartition('.')[-1]}"
     # Reset byte position of the file (cf. https://fastapi.tiangolo.com/tutorial/request-files/#uploadfile)
     await file.seek(0)
+    # Use MD5 to verify upload
+    md5_hash = hash_content_file(file.file.read(), use_md5=True)
+    await file.seek(0)
     # If files are in a subfolder of the bucket, prepend the folder path
-    bucket_key = resolve_bucket_key(file_name, media_bucket.folder)
+    bucket_key = resolve_bucket_key(file_name, "media")
 
     # Upload if bucket_key is different (otherwise the content is the exact same)
     if isinstance(entry["bucket_key"], str) and entry["bucket_key"] == bucket_key:
         return await crud.get_entry(media, media_id)
     else:
         # Failed upload
-        if not await media_bucket.upload_file(bucket_key=bucket_key, file_binary=file.file):
+        if not await s3_bucket.upload_file(bucket_key=bucket_key, file_binary=file.file):
             raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed upload")
         # Data integrity check
-        uploaded_file = await media_bucket.get_file(bucket_key=bucket_key)
-        # Failed download
-        if uploaded_file is None:
+        file_meta = await s3_bucket.get_file_metadata(bucket_key)
+        # Corrupted file
+        if md5_hash != file_meta["ETag"].replace('"', ""):
+            # Delete the corrupted upload
+            await s3_bucket.delete_file(bucket_key)
+            # Raise the exception
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="The data integrity check failed (unable to download media from bucket)",
+                detail="Data was corrupted during upload",
             )
-        # Remove temp local file
-        background_tasks.add_task(media_bucket.flush_tmp_file, uploaded_file)
-        # Check the hash
-        with open(uploaded_file, "rb") as f:
-            upload_hash = hash_content_file(f.read())
-        if upload_hash != file_hash:
-            # Delete corrupted file
-            await media_bucket.delete_file(bucket_key)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Data was corrupted during upload"
-            )
+        # If a file was previously uploaded, delete it
+        if isinstance(entry["bucket_key"], str):
+            await s3_bucket.delete_file(entry["bucket_key"])
 
         entry_dict = dict(**entry)
         entry_dict["bucket_key"] = bucket_key
@@ -144,5 +142,5 @@ async def get_media_url(
     # Check in DB
     media_instance = await check_media_registration(media_id)
     # Check in bucket
-    temp_public_url = await media_bucket.get_public_url(media_instance["bucket_key"])
+    temp_public_url = await s3_bucket.get_public_url(media_instance["bucket_key"])
     return MediaUrl(url=temp_public_url)

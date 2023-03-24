@@ -92,6 +92,12 @@ To run all quality checks together
 make quality
 ```
 
+The previous command won't modify anything in your codebase. Some fixes (import ordering and code formatting) can be done automatically using the following command:
+
+```shell
+make style
+```
+
 ### Submit your modifications
 
 Push your last modifications to your remote branch
