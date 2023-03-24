@@ -1,4 +1,4 @@
-from app.services import s3_bucket, resolve_bucket_key
+from app.services import resolve_bucket_key, s3_bucket
 from app.services.bucket import S3Bucket
 
 
@@ -15,4 +15,3 @@ def test_resolve_bucket_key(monkeypatch):
 
 def test_bucket_service():
     assert isinstance(s3_bucket, S3Bucket)
-
