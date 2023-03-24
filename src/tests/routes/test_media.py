@@ -9,7 +9,7 @@ import requests
 
 from app import db
 from app.api import crud
-from app.services import media_bucket
+from app.services import s3_bucket
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
 
@@ -203,7 +203,7 @@ async def test_upload_media(test_app_asyncio, init_test_db, test_db, monkeypatch
     async def mock_upload_file(bucket_key, file_binary):
         return True
 
-    monkeypatch.setattr(media_bucket, "upload_file", mock_upload_file)
+    monkeypatch.setattr(s3_bucket, "upload_file", mock_upload_file)
 
     # Download and save a temporary file
     local_tmp_path = os.path.join(tempfile.gettempdir(), "my_temp_image.jpg")
@@ -214,12 +214,12 @@ async def test_upload_media(test_app_asyncio, init_test_db, test_db, monkeypatch
     async def mock_get_file(bucket_key):
         return local_tmp_path
 
-    monkeypatch.setattr(media_bucket, "get_file", mock_get_file)
+    monkeypatch.setattr(s3_bucket, "get_file", mock_get_file)
 
     async def mock_delete_file(filename):
         return True
 
-    monkeypatch.setattr(media_bucket, "delete_file", mock_delete_file)
+    monkeypatch.setattr(s3_bucket, "delete_file", mock_delete_file)
 
     # Switch content-type from JSON to multipart
     del admin_auth["Content-Type"]
@@ -240,6 +240,6 @@ async def test_upload_media(test_app_asyncio, init_test_db, test_db, monkeypatch
     async def failing_upload(bucket_key, file_binary):
         return False
 
-    monkeypatch.setattr(media_bucket, "upload_file", failing_upload)
+    monkeypatch.setattr(s3_bucket, "upload_file", failing_upload)
     response = await test_app_asyncio.post(f"/media/{new_media_id}/upload", files=dict(file="bar"), headers=admin_auth)
     assert response.status_code == 500
