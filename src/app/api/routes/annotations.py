@@ -13,7 +13,7 @@ from app.api.deps import get_current_access
 from app.api.schemas import AccessType, AnnotationCreation, AnnotationIn, AnnotationOut, AnnotationUrl
 from app.api.security import hash_content_file
 from app.db import annotations
-from app.services import s3_bucket
+from app.services import resolve_bucket_key, s3_bucket
 
 router = APIRouter()
 

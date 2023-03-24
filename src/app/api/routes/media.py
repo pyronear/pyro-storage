@@ -13,7 +13,7 @@ from app.api.deps import get_current_access
 from app.api.schemas import AccessType, MediaCreation, MediaIn, MediaOut, MediaUrl
 from app.api.security import hash_content_file
 from app.db import get_session, media
-from app.services import s3_bucket
+from app.services import resolve_bucket_key, s3_bucket
 
 router = APIRouter()
 
