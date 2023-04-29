@@ -23,12 +23,8 @@ repos:
     rev: 5.10.1
     hooks:
     - id: isort
-      args: ["--profile", "black"]
-  - repo: https://github.com/PyCQA/flake8
-    rev: 4.0.1
+      exclude: "(__init__.py)$"
+  - repo: https://github.com/charliermarsh/ruff-pre-commit
+    rev: 'v0.0.260'
     hooks:
-      - id: flake8
-  - repo: https://github.com/PyCQA/autoflake
-    rev: v1.7.7
-    hooks:
-    - id: autoflake
+      - id: ruff

@@ -1,3 +1,2 @@
 from .base import *
-from . import accesses
-from . import authorizations
+from . import accesses, authorizations
