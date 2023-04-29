@@ -88,6 +88,7 @@ ignore_missing_imports = true
 line_length = 120
 src_paths = ["src/"]
 skip_glob = ["client/*", "**/__init__.py"]
+known_first_party = ["pyrostorage", "app"]
 known_third_party = ["fastapi"]
 
 [tool.pydocstyle]
