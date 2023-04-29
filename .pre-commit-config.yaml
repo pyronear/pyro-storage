@@ -19,11 +19,11 @@ repos:
     rev: 22.3.0
     hooks:
     - id: black
-  # - repo: https://github.com/pre-commit/mirrors-isort
-  #   rev: v5.10.1
-  #   hooks:
-  #   - id: isort
-  #     exclude: .+/__init__\.py$
+  - repo: https://github.com/pre-commit/mirrors-isort
+    rev: v5.10.1
+    hooks:
+    - id: isort
+      # exclude: .+/__init__\.py$
   # - repo: https://github.com/pycqa/isort
   #   rev: 5.10.1
   #   hooks:
