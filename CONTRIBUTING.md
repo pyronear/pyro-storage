@@ -8,11 +8,10 @@ Whatever the way you wish to contribute to the project, please respect the [code
 
 ## Codebase structure
 
-- [`src/app`](https://github.com/pyronear/pyro-storage/blob/main/src/app) - The actual API codebase
-- [`src/tests`](https://github.com/pyronear/pyro-storage/blob/main/src/tests) - The APi unit tests
-- [`nginx`](https://github.com/pyronear/pyro-storage/blob/main/nginx) - NGINX configuration
-- [`client/pyrostorage`](https://github.com/pyronear/pyro-storageblob/main/client/pyrostorage) - The actual API client
-- [`client/docs`](https://github.com/pyronear/pyro-storage/blob/main/client/docs) - Documentation of the Python client
+- [`./src/app`](src/app) - The actual API codebase
+- [`./src/tests`](src/tests) - The APi unit tests
+- [`./nginx`](nginx) - NGINX configuration
+- [`./client`](client) - The API Python client (please refer to its specific [contribution guidelines](client/CONTRIBUTING.md))
 
 
 ## Continuous Integration

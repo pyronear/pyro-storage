@@ -17,15 +17,15 @@ style:
 # Pin the dependencies
 lock:
 	poetry lock
-	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
-	poetry export -f requirements.txt --without-hashes --with dev --output src/requirements-dev.txt
 
 # Build the docker
 build:
-	docker build src/. -t pyrostorage:python3.8-alpine3.10
+	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
+	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
 
 # Run the docker
 run:
+	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
 	docker-compose up -d --build
 
 # Run the docker
@@ -33,7 +33,9 @@ stop:
 	docker-compose down
 
 run-dev:
-	docker build src/. -t pyrostorage:python3.8-alpine3.10
+	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
+	poetry export -f requirements.txt --without-hashes --with dev --output src/requirements-dev.txt
+	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
 	docker-compose -f docker-compose-dev.yml up -d --build
 
 stop-dev:
@@ -41,7 +43,9 @@ stop-dev:
 
 # Run tests for the library
 test:
-	docker build src/. -t pyrostorage:python3.8-alpine3.10
+	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
+	poetry export -f requirements.txt --without-hashes --with dev --output src/requirements-dev.txt
+	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
 	docker-compose -f docker-compose-dev.yml up -d --build
 	docker-compose exec -T backend coverage run -m pytest tests/
 	docker-compose -f docker-compose-dev.yml down
