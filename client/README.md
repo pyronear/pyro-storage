@@ -7,7 +7,7 @@ Client for the [data curation API](https://github.com/pyronear/pyro-storage)
 
 ## Setup
 
-Python 3.7 (or higher) and [pip](https://pip.pypa.io/en/stable/)/[conda](https://docs.conda.io/en/latest/miniconda.html) are required to install TorchCAM.
+Python 3.8 (or higher) and [pip](https://pip.pypa.io/en/stable/)/[conda](https://docs.conda.io/en/latest/miniconda.html) are required to install TorchCAM.
 
 ### Stable release
 
