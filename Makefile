@@ -22,7 +22,7 @@ lock:
 
 # Build the docker
 build:
-	docker build src/. -t pyrostorage:python3.8-alpine3.10
+	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
 
 # Run the docker
 run:
@@ -33,7 +33,7 @@ stop:
 	docker-compose down
 
 run-dev:
-	docker build src/. -t pyrostorage:python3.8-alpine3.10
+	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
 	docker-compose -f docker-compose-dev.yml up -d --build
 
 stop-dev:
@@ -41,7 +41,7 @@ stop-dev:
 
 # Run tests for the library
 test:
-	docker build src/. -t pyrostorage:python3.8-alpine3.10
+	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
 	docker-compose -f docker-compose-dev.yml up -d --build
 	docker-compose exec -T backend coverage run -m pytest tests/
 	docker-compose -f docker-compose-dev.yml down
