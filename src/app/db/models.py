@@ -5,7 +5,7 @@
 
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -51,10 +51,10 @@ class Annotations(Base):
 
     id = Column(Integer, primary_key=True)
     media_id = Column(Integer, ForeignKey("media.id"))
-    bucket_key = Column(String(100), nullable=True)
+    observations = Column(ARRAY(String(50)), nullable=False)
     created_at = Column(DateTime, default=func.now())
 
     media = relationship("Media", uselist=False, back_populates="annotations")
 
     def __repr__(self):
-        return f"<Media(media_id='{self.media_id}', bucket_key='{self.bucket_key}'>"
+        return f"<Media(media_id='{self.media_id}', observations='{self.observations}'>"

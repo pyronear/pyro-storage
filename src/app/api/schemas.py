@@ -88,15 +88,8 @@ class MediaUrl(BaseModel):
 # Annotation
 class AnnotationIn(BaseModel):
     media_id: int = Field(..., gt=0)
-
-
-class AnnotationCreation(AnnotationIn):
-    bucket_key: str = Field(...)
+    observations: List[str] = Field(..., min_items=0)
 
 
 class AnnotationOut(AnnotationIn, _CreatedAt, _Id):
     pass
-
-
-class AnnotationUrl(BaseModel):
-    url: str
