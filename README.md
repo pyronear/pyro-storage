@@ -99,6 +99,7 @@ This file will have to hold the following information:
 Optionally, the following information can be added:
 - `SENTRY_DSN`: the URL of the [Sentry](https://sentry.io/) project, which monitors back-end errors and report them back.
 - `SERVER_NAME`: the server tag to apply to events.
+- `CORS_ORIGIN`: comma-separated list of allowed origins
 
 So your `.env` file should look like something similar to:
 ```
