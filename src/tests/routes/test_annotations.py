@@ -1,6 +1,4 @@
 import json
-import os
-import tempfile
 from datetime import datetime
 
 import pytest
@@ -8,8 +6,6 @@ import pytest_asyncio
 
 from app import db
 from app.api import crud
-from app.api.security import hash_content_file
-from app.services import s3_bucket
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
 
@@ -24,7 +20,8 @@ MEDIA_TABLE = [
 ]
 
 ANNOTATIONS_TABLE = [
-    {"id": 1, "media_id": 1, "bucket_key": "dummy_key", "created_at": "2020-10-13T08:18:45.447773"},
+    {"id": 1, "media_id": 1, "observations": ["fire", "smoke", "dog", "coffee"], "created_at": "2020-10-13T08:18:45.447773"},
+    {"id": 2, "media_id": 2, "observations": [], "created_at": "2022-10-13T08:18:45.447773"},
 ]
 
 
@@ -65,7 +62,7 @@ async def test_get_annotation(test_app_asyncio, init_test_db, access_idx, annota
         assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
-        assert response.json() == {k: v for k, v in ANNOTATIONS_TABLE[annotation_id - 1].items() if k != "bucket_key"}
+        assert response.json() == ANNOTATIONS_TABLE[annotation_id - 1]
 
 
 @pytest.mark.parametrize(
@@ -73,7 +70,7 @@ async def test_get_annotation(test_app_asyncio, init_test_db, access_idx, annota
     [
         [None, 401, "Not authenticated", None],
         [0, 200, None, []],
-        [1, 200, None, [{k: v for k, v in elt.items() if k != "bucket_key"} for elt in ANNOTATIONS_TABLE]],
+        [1, 200, None, ANNOTATIONS_TABLE],
     ],
 )
 @pytest.mark.asyncio
@@ -164,8 +161,7 @@ async def test_update_annotation(
         updated_annotation = await get_entry(test_db, db.annotations, annotation_id)
         updated_annotation = dict(**updated_annotation)
         for k, v in updated_annotation.items():
-            if k != "bucket_key":
-                assert v == payload.get(k, ANNOTATIONS_TABLE_FOR_DB[annotation_id - 1][k])
+            assert v == payload.get(k, ANNOTATIONS_TABLE_FOR_DB[annotation_id - 1][k])
 
 
 @pytest.mark.parametrize(
@@ -194,71 +190,6 @@ async def test_delete_annotation(
         assert response.json()["detail"] == status_details
 
     if response.status_code // 100 == 2:
-        assert response.json() == {k: v for k, v in ANNOTATIONS_TABLE[annotation_id - 1].items() if k != "bucket_key"}
+        assert response.json() == ANNOTATIONS_TABLE[annotation_id - 1]
         remaining_annotation = await test_app_asyncio.get("/annotations/", headers=auth)
         assert all(entry["id"] != annotation_id for entry in remaining_annotation.json())
-
-
-@pytest.mark.asyncio
-async def test_upload_annotation(test_app_asyncio, init_test_db, test_db, monkeypatch):
-
-    admin_idx = 1
-    # Create a custom access token
-    admin_auth = await pytest.get_token(ACCESS_TABLE[admin_idx]["id"], ACCESS_TABLE[admin_idx]["scope"].split())
-
-    # 1 - Create a annotation that will have an upload
-    payload = {"media_id": 2}
-    new_annotation_id = len(ANNOTATIONS_TABLE_FOR_DB) + 1
-    response = await test_app_asyncio.post("/annotations/", data=json.dumps(payload), headers=admin_auth)
-    assert response.status_code == 201
-
-    # 2 - Upload something
-    async def mock_upload_file(bucket_key, file_binary):
-        return True
-
-    monkeypatch.setattr(s3_bucket, "upload_file", mock_upload_file)
-
-    # Download and save a temporary file
-    local_tmp_path = os.path.join(tempfile.gettempdir(), "my_temp_annotation.json")
-    data = {"label": "fire"}
-    with open(local_tmp_path, "w") as f:
-        json.dump(data, f)
-
-    with open(local_tmp_path, "rb") as f:
-        md5_hash = hash_content_file(f.read(), use_md5=True)
-
-    async def mock_get_file_metadata(bucket_key):
-        return {"ETag": md5_hash}
-
-    monkeypatch.setattr(s3_bucket, "get_file_metadata", mock_get_file_metadata)
-
-    async def mock_delete_file(filename):
-        return True
-
-    monkeypatch.setattr(s3_bucket, "delete_file", mock_delete_file)
-
-    # Switch content-type from JSON to multipart
-    del admin_auth["Content-Type"]
-
-    with open(local_tmp_path, "rb") as content:
-        response = await test_app_asyncio.post(
-            f"/annotations/{new_annotation_id}/upload", files=dict(file=content), headers=admin_auth
-        )
-
-    assert response.status_code == 200, print(response.json()["detail"])
-    response_json = response.json()
-    updated_annotation = await get_entry(test_db, db.annotations, response_json["id"])
-    updated_annotation = dict(**updated_annotation)
-    response_json.pop("created_at")
-    assert {k: v for k, v in updated_annotation.items() if k not in ("created_at", "bucket_key")} == response_json
-    assert updated_annotation["bucket_key"] is not None
-
-    # 2b - Upload failing
-    async def failing_upload(bucket_key, file_binary):
-        return False
-
-    monkeypatch.setattr(s3_bucket, "upload_file", failing_upload)
-    response = await test_app_asyncio.post(
-        f"/annotations/{new_annotation_id}/upload", files=dict(file="bar"), headers=admin_auth
-    )
-    assert response.status_code == 500

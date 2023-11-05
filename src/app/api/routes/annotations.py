@@ -5,15 +5,13 @@
 
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, BackgroundTasks, File, HTTPException, Path, Security, UploadFile, status
+from fastapi import APIRouter, Path, Security, status
 
 from app.api import crud
 from app.api.crud.authorizations import check_access_read, is_admin_access
 from app.api.deps import get_current_access
-from app.api.schemas import AccessType, AnnotationCreation, AnnotationIn, AnnotationOut, AnnotationUrl
-from app.api.security import hash_content_file
+from app.api.schemas import AccessType, AnnotationIn, AnnotationOut
 from app.db import annotations
-from app.services import resolve_bucket_key, s3_bucket
 
 router = APIRouter()
 
@@ -33,7 +31,7 @@ async def create_annotation(
     payload: AnnotationIn, _=Security(get_current_access, scopes=[AccessType.admin, AccessType.user])
 ):
     """
-    Creates an annotation related to specific media, based on media_id as argument
+    Creates an annotation related to specific media, based on media_id as argument, and with as many observations as needed
 
     Below, click on "Schema" for more detailed information about arguments
     or "Example Value" to get a concrete idea of arguments
@@ -86,69 +84,3 @@ async def delete_annotation(
     Based on a annotation_id, deletes the specified annotation
     """
     return await crud.delete_entry(annotations, annotation_id)
-
-
-@router.post("/{annotation_id}/upload", response_model=AnnotationOut, status_code=200)
-async def upload_annotation(
-    background_tasks: BackgroundTasks,
-    annotation_id: int = Path(..., gt=0),
-    file: UploadFile = File(...),
-):
-    """
-    Upload a annotation (image or video) linked to an existing annotation object in the DB
-    """
-
-    # Check in DB
-    entry = await check_annotation_registration(annotation_id)
-
-    # Concatenate the first 32 chars (to avoid system interactions issues) of SHA256 hash with file extension
-    file_hash = hash_content_file(file.file.read())
-    file_name = f"{file_hash[:32]}.{file.filename.rpartition('.')[-1]}"
-    # Reset byte position of the file (cf. https://fastapi.tiangolo.com/tutorial/request-files/#uploadfile)
-    await file.seek(0)
-    # Use MD5 to verify upload
-    md5_hash = hash_content_file(file.file.read(), use_md5=True)
-    await file.seek(0)
-    # If files are in a subfolder of the bucket, prepend the folder path
-    bucket_key = resolve_bucket_key(file_name, "annotations")
-
-    # Upload if bucket_key is different (otherwise the content is the exact same)
-    if isinstance(entry["bucket_key"], str) and entry["bucket_key"] == bucket_key:
-        return await crud.get_entry(annotations, annotation_id)
-    else:
-        # Failed upload
-        if not await s3_bucket.upload_file(bucket_key=bucket_key, file_binary=file.file):
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed upload")
-        # Data integrity check
-        file_meta = await s3_bucket.get_file_metadata(bucket_key)
-        # Corrupted file
-        if md5_hash != file_meta["ETag"].replace('"', ""):
-            # Delete the corrupted upload
-            await s3_bucket.delete_file(bucket_key)
-            # Raise the exception
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Data was corrupted during upload",
-            )
-        # If a file was previously uploaded, delete it
-        if isinstance(entry["bucket_key"], str):
-            await s3_bucket.delete_file(entry["bucket_key"])
-
-        entry_dict = dict(**entry)
-        entry_dict["bucket_key"] = bucket_key
-        return await crud.update_entry(annotations, AnnotationCreation(**entry_dict), annotation_id)
-
-
-@router.get("/{annotation_id}/url", response_model=AnnotationUrl, status_code=200)
-async def get_annotation_url(
-    annotation_id: int = Path(..., gt=0),
-    requester=Security(get_current_access, scopes=[AccessType.admin, AccessType.user]),
-):
-    """Resolve the temporary media image URL"""
-    await check_access_read(requester.id)
-
-    # Check in DB
-    annotation_instance = await check_annotation_registration(annotation_id)
-    # Check in bucket
-    temp_public_url = await s3_bucket.get_public_url(annotation_instance["bucket_key"])
-    return AnnotationUrl(url=temp_public_url)
