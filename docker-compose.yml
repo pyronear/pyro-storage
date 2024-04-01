@@ -30,7 +30,7 @@ services:
       - POSTGRES_PASSWORD=dummy_pg_pwd
       - POSTGRES_DB=dummy_pg_db
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}'"]
+      test: ['CMD-SHELL', "sh -c 'pg_isready -U dummy_pg_user -d dummy_pg_db'"]
       interval: 10s
       timeout: 3s
       retries: 3
