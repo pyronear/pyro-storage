@@ -18,7 +18,8 @@ services:
       - S3_REGION=${S3_REGION}
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
     depends_on:
-      - db
+      db:
+        condition: service_healthy
   db:
     image: postgres:15-alpine
     volumes:
