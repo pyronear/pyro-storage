@@ -47,11 +47,11 @@ class Media(Base):
 
 
 class ObservationType(str, enum.Enum):
-    fire: str = "fire"
-    smoke: str = "smoke"
     clouds: str = "clouds"
-    sky: str = "sky"
+    fire: str = "fire"
     fog: str = "fog"
+    sky: str = "sky"
+    smoke: str = "smoke"
 
 class Annotations(Base):
     __tablename__ = "annotations"
