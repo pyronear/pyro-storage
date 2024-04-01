@@ -8,7 +8,7 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, validator
 
-from app.db.models import AccessType, MediaType
+from app.db.models import AccessType, MediaType, ObservationType
 
 
 # Template classes
@@ -88,7 +88,7 @@ class MediaUrl(BaseModel):
 # Annotation
 class AnnotationIn(BaseModel):
     media_id: int = Field(..., gt=0)
-    observations: List[str] = Field(..., min_items=0)
+    observations: List[ObservationType]
 
 
 class AnnotationOut(AnnotationIn, _CreatedAt, _Id):

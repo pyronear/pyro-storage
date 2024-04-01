@@ -9,6 +9,8 @@ from app.api import crud
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
 
+from app.db.models import ObservationType
+
 ACCESS_TABLE = [
     {"id": 1, "login": "first_login", "hashed_password": "hashed_pwd", "scope": "user"},
     {"id": 2, "login": "second_login", "hashed_password": "hashed_pwd", "scope": "admin"},
@@ -20,7 +22,7 @@ MEDIA_TABLE = [
 ]
 
 ANNOTATIONS_TABLE = [
-    {"id": 1, "media_id": 1, "observations": ["fire", "smoke", "dog", "coffee"], "created_at": "2020-10-13T08:18:45.447773"},
+    {"id": 1, "media_id": 1, "observations": [ObservationType.fire, ObservationType.smoke, ObservationType.clouds], "created_at": "2020-10-13T08:18:45.447773"},
     {"id": 2, "media_id": 2, "observations": [], "created_at": "2022-10-13T08:18:45.447773"},
 ]
 
@@ -95,25 +97,31 @@ async def test_fetch_annotations(
 @pytest.mark.parametrize(
     "access_idx, payload, status_code, status_details",
     [
-        [None, {"media_id": 1}, 401, "Not authenticated"],
-        [0, {"media_id": 1}, 201, None],
-        [1, {"media_id": 1}, 201, None],
-        [1, {"media_id": "alpha"}, 422, None],
+        [None, {"media_id": 1, "observations": []}, 401, "Not authenticated"],
+        [0, {"media_id": 1, "observations": []}, 201, None],
+        [1, {"media_id": 1, "observations": []}, 201, None],
+        [1, {"media_id": 1, "observations": ["clouds"]}, 201, None],
+        [1, {"media_id": 1, "observations": ["clouds", "fire", "smoke"]}, 201, None],
+        [1, {"media_id": 1, "observations": ["clouds", "fire", "puppy"]}, 422, None],
+        [1, {"media_id": 1, "observations": [1337]}, 422, None],
+        [1, {"media_id": 1, "observations": "smoke"}, 422, None],
+        [1, {"media_id": "alpha", "observations": []}, 422, None],
         [1, {}, 422, None],
+        [1, {"media_id": 1}, 422, None],
+        [1, {"observations": []}, 422, None],
     ],
 )
 @pytest.mark.asyncio
 async def test_create_annotation(
     test_app_asyncio, init_test_db, test_db, access_idx, payload, status_code, status_details
 ):
-
     # Create a custom access token
     auth = None
     if isinstance(access_idx, int):
         auth = await pytest.get_token(ACCESS_TABLE[access_idx]["id"], ACCESS_TABLE[access_idx]["scope"].split())
 
     utc_dt = datetime.utcnow()
-    response = await test_app_asyncio.post("/annotations/", data=json.dumps(payload), headers=auth)
+    response = await test_app_asyncio.post("/annotations/", json=payload, headers=auth)
     assert response.status_code == status_code
     if isinstance(status_details, str):
         assert response.json()["detail"] == status_details
@@ -133,13 +141,18 @@ async def test_create_annotation(
 @pytest.mark.parametrize(
     "access_idx, payload, annotation_id, status_code, status_details",
     [
-        [None, {"media_id": 1}, 1, 401, "Not authenticated"],
-        [0, {"media_id": 1}, 1, 403, "Your access scope is not compatible with this operation."],
-        [1, {"media_id": 1}, 1, 200, None],
+        [None, {"media_id": 1, "observations": []}, 1, 401, "Not authenticated"],
+        [0, {"media_id": 1, "observations": []}, 1, 403, "Your access scope is not compatible with this operation."],
+        [1, {"media_id": 1, "observations": []}, 1, 200, None],
+        [1, {"media_id": 1, "observations": [1337]}, 1, 422, None],
+        [1, {"media_id": 1, "observations": ["smoke"]}, 1, 200, None],
+        [1, {"media_id": 1, "observations": ["smoke", "fire", "puppy"]}, 1, 422, None],
         [1, {}, 1, 422, None],
-        [1, {"media_id": "alpha"}, 1, 422, None],
-        [1, {"media_id": 1}, 999, 404, "Table annotations has no entry with id=999"],
-        [1, {"media_id": 1}, 0, 422, None],
+        [1, {"media_id": 1,}, 1, 422, None],
+        [1, {"observations": []}, 1, 422, None],
+        [1, {"media_id": "alpha", "observations": []}, 1, 422, None],
+        [1, {"media_id": 1, "observations": []}, 999, 404, "Table annotations has no entry with id=999"],
+        [1, {"media_id": 1, "observations": []}, 0, 422, None],
     ],
 )
 @pytest.mark.asyncio

@@ -46,12 +46,19 @@ class Media(Base):
         return f"<Media(bucket_key='{self.bucket_key}', type='{self.type}'>"
 
 
+class ObservationType(str, enum.Enum):
+    fire: str = "fire"
+    smoke: str = "smoke"
+    clouds: str = "clouds"
+    sky: str = "sky"
+    fog: str = "fog"
+
 class Annotations(Base):
     __tablename__ = "annotations"
 
     id = Column(Integer, primary_key=True)
     media_id = Column(Integer, ForeignKey("media.id"))
-    observations = Column(ARRAY(String(50)), nullable=False)
+    observations = Column(ARRAY(Enum(ObservationType)), nullable=False)
     created_at = Column(DateTime, default=func.now())
 
     media = relationship("Media", uselist=False, back_populates="annotations")
