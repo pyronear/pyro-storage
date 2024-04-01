@@ -17,6 +17,11 @@ services:
       - S3_SECRET_KEY=${S3_SECRET_KEY}
       - S3_REGION=${S3_REGION}
       - S3_ENDPOINT_URL=${S3_ENDPOINT_URL}
+    healthcheck:
+      test: ['CMD-SHELL', 'nc -vz localhost 8080']
+      interval: 10s
+      timeout: 3s
+      retries: 3
     depends_on:
       db:
         condition: service_healthy

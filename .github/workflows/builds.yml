@@ -31,7 +31,6 @@ jobs:
           S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
         run: |
           docker compose up -d --build --wait
-          sleep 20
           docker compose logs backend
           nc -vz localhost 8080
           curl http://localhost:8080/docs
