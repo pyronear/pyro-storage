@@ -144,9 +144,13 @@ class Client:
             HTTP response containing the created annotation
         """
 
-        return requests.post(self.routes["create-annotation"], headers=self.headers, json={"media_id": media_id, observations: observations})
+        return requests.post(
+            self.routes["create-annotation"],
+            headers=self.headers,
+            json={"media_id": media_id, observations: observations},
+        )
 
-    def update_annotation(self, annotation_id: int, observations: List[str]=None) -> Response:
+    def update_annotation(self, annotation_id: int, observations: List[str] = None) -> Response:
         """Update an annotation entry
 
         Example::
@@ -161,4 +165,8 @@ class Client:
         Returns:
             HTTP response containing the updated annotation
         """
-        return requests.post(f'self.routes["update-annotation"]/{annotation_id}', headers=self.headers, json={"observations": observations})
+        return requests.post(
+            f'self.routes["update-annotation"]/{annotation_id}',
+            headers=self.headers,
+            json={"observations": observations},
+        )

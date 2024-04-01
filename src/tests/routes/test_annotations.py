@@ -6,10 +6,9 @@ import pytest_asyncio
 
 from app import db
 from app.api import crud
+from app.db.models import ObservationType
 from tests.db_utils import TestSessionLocal, fill_table, get_entry
 from tests.utils import update_only_datetime
-
-from app.db.models import ObservationType
 
 ACCESS_TABLE = [
     {"id": 1, "login": "first_login", "hashed_password": "hashed_pwd", "scope": "user"},
@@ -22,7 +21,12 @@ MEDIA_TABLE = [
 ]
 
 ANNOTATIONS_TABLE = [
-    {"id": 1, "media_id": 1, "observations": [ObservationType.fire, ObservationType.smoke, ObservationType.clouds], "created_at": "2020-10-13T08:18:45.447773"},
+    {
+        "id": 1,
+        "media_id": 1,
+        "observations": [ObservationType.fire, ObservationType.smoke, ObservationType.clouds],
+        "created_at": "2020-10-13T08:18:45.447773",
+    },
     {"id": 2, "media_id": 2, "observations": [], "created_at": "2022-10-13T08:18:45.447773"},
 ]
 

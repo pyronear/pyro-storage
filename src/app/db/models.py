@@ -5,7 +5,7 @@
 
 import enum
 
-from sqlalchemy import Column, DateTime, Enum, ForeignKey, Integer, String, ARRAY
+from sqlalchemy import ARRAY, Column, DateTime, Enum, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
@@ -52,6 +52,7 @@ class ObservationType(str, enum.Enum):
     fog: str = "fog"
     sky: str = "sky"
     smoke: str = "smoke"
+
 
 class Annotations(Base):
     __tablename__ = "annotations"
