@@ -141,18 +141,16 @@ async def test_create_annotation(
 @pytest.mark.parametrize(
     "access_idx, payload, annotation_id, status_code, status_details",
     [
-        [None, {"media_id": 1, "observations": []}, 1, 401, "Not authenticated"],
-        [0, {"media_id": 1, "observations": []}, 1, 403, "Your access scope is not compatible with this operation."],
-        [1, {"media_id": 1, "observations": []}, 1, 200, None],
-        [1, {"media_id": 1, "observations": [1337]}, 1, 422, None],
-        [1, {"media_id": 1, "observations": ["smoke"]}, 1, 200, None],
-        [1, {"media_id": 1, "observations": ["smoke", "fire", "puppy"]}, 1, 422, None],
+        [None, {"observations": []}, 1, 401, "Not authenticated"],
+        [0, {"observations": []}, 1, 403, "Your access scope is not compatible with this operation."],
+        [1, {"observations": []}, 1, 200, None],
+        [1, {"observations": [1337]}, 1, 422, None],
+        [1, {"observations": ["smoke"]}, 1, 200, None],
+        [1, {"observations": ["smoke", "fire", "puppy"]}, 1, 422, None],
         [1, {}, 1, 422, None],
-        [1, {"media_id": 1,}, 1, 422, None],
-        [1, {"observations": []}, 1, 422, None],
-        [1, {"media_id": "alpha", "observations": []}, 1, 422, None],
-        [1, {"media_id": 1, "observations": []}, 999, 404, "Table annotations has no entry with id=999"],
-        [1, {"media_id": 1, "observations": []}, 0, 422, None],
+        [1, {"observations": "smoke"}, 1, 422, None],
+        [1, {"observations": []}, 999, 404, "Table annotations has no entry with id=999"],
+        [1, {"observations": []}, 0, 422, None],
     ],
 )
 @pytest.mark.asyncio

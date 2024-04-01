@@ -10,7 +10,7 @@ from fastapi import APIRouter, Path, Security, status
 from app.api import crud
 from app.api.crud.authorizations import check_access_read, is_admin_access
 from app.api.deps import get_current_access
-from app.api.schemas import AccessType, AnnotationIn, AnnotationOut
+from app.api.schemas import AccessType, AnnotationIn, AnnotationOut, AnnotationUpdateIn
 from app.db import annotations
 
 router = APIRouter()
@@ -64,9 +64,9 @@ async def fetch_annotations(
         return []
 
 
-@router.put("/{annotation_id}/", response_model=AnnotationOut, summary="Update information about a specific annotation")
+@router.put("/{annotation_id}/", response_model=AnnotationOut, summary="Update observations on a specific annotation")
 async def update_annotation(
-    payload: AnnotationIn,
+    payload: AnnotationUpdateIn,
     annotation_id: int = Path(..., gt=0),
     _=Security(get_current_access, scopes=[AccessType.admin]),
 ):

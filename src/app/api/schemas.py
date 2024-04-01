@@ -90,6 +90,8 @@ class AnnotationIn(BaseModel):
     media_id: int = Field(..., gt=0)
     observations: List[ObservationType]
 
+class AnnotationUpdateIn(BaseModel):
+    observations: List[ObservationType]
 
 class AnnotationOut(AnnotationIn, _CreatedAt, _Id):
     pass
