@@ -150,7 +150,7 @@ class Client:
             json={"media_id": media_id, "observations": observations},
         )
 
-    def update_annotation(self, annotation_id: int, observations: List[str] = None) -> Response:
+    def update_annotation(self, annotation_id: int, observations: List[str]) -> Response:
         """Update an annotation entry
 
         Example::
