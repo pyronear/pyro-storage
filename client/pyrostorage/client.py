@@ -147,7 +147,7 @@ class Client:
         return requests.post(
             self.routes["create-annotation"],
             headers=self.headers,
-            json={"media_id": media_id, observations: observations},
+            json={"media_id": media_id, "observations": observations},
         )
 
     def update_annotation(self, annotation_id: int, observations: List[str] = None) -> Response:
