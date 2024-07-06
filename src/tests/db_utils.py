@@ -34,7 +34,7 @@ async def fill_table(test_db: Database, table: Table, entries: List[Dict[str, An
     are not incremented if the "id" field is included
     """
     if remove_ids:
-        entries = [{k: v for k, v in x.items() if k != "id"} for x in entries]
+        entries = [{k: v for k, v in entry.items() if k != "id"} for entry in entries]
 
     query = table.insert().values(entries)
     await test_db.execute(query=query)

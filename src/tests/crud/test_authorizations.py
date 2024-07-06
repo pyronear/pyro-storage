@@ -19,7 +19,7 @@ MEDIA_TABLE = [
 
 
 ANNOTATIONS_TABLE = [
-    {"id": 1, "media_id": 1, "created_at": "2020-10-13T08:18:45.447773"},
+    {"id": 1, "media_id": 1, "observations": [], "created_at": "2020-10-13T08:18:45.447773"},
 ]
 
 

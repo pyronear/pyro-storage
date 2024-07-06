@@ -5,7 +5,7 @@
 
 import io
 import logging
-from typing import Dict
+from typing import Dict, List
 from urllib.parse import urljoin
 
 import requests
@@ -29,8 +29,7 @@ ROUTES: Dict[str, str] = {
     # ANNOTATIONS
     #################
     "create-annotation": "/annotations",
-    "upload-annotation": "/annotations/{annotation_id}/upload",
-    "get-annotation-url": "/annotations/{annotation_id}/url",
+    "update-annotation": "/annotations/{annotation_id}",
 }
 
 
@@ -129,7 +128,7 @@ class Client:
 
         return requests.get(self.routes["get-media-url"].format(media_id=media_id), headers=self.headers)
 
-    def create_annotation(self, media_id: int) -> Response:
+    def create_annotation(self, media_id: int, observations: List[str]) -> Response:
         """Create an annotation entry
 
         Example::
@@ -139,49 +138,35 @@ class Client:
 
         Args:
             media_id: the identifier of the media entry
+            observations: list of observations
 
         Returns:
             HTTP response containing the created annotation
         """
 
-        return requests.post(self.routes["create-annotation"], headers=self.headers, json={"media_id": media_id})
+        return requests.post(
+            self.routes["create-annotation"],
+            headers=self.headers,
+            json={"media_id": media_id, "observations": observations},
+        )
 
-    def upload_annotation(self, annotation_id: int, annotation_data: bytes) -> Response:
-        """Upload the annotation content
+    def update_annotation(self, annotation_id: int, observations: List[str]) -> Response:
+        """Update an annotation entry
 
         Example::
             >>> from pyrostorage import client
             >>> api_client = client.Client("http://pyro-storage.herokuapp.com", "MY_LOGIN", "MY_PWD")
-            >>> with open("path/to/my/file.ext", "rb") as f: data = f.read()
-            >>> response = api_client.upload_annotation(annotation_id=1, annotation_data=data)
+            >>> response = api_client.update_annotation(media_id=1)
 
         Args:
-            annotation_id: ID of the associated annotation entry
-            annotation_data: byte data
+            annotation_id: the identifier of the annotation entry
+            observations: list of observations
 
         Returns:
             HTTP response containing the updated annotation
         """
-
         return requests.post(
-            self.routes["upload-annotation"].format(annotation_id=annotation_id),
+            f'self.routes["update-annotation"]/{annotation_id}',
             headers=self.headers,
-            files={"file": io.BytesIO(annotation_data)},
+            json={"observations": observations},
         )
-
-    def get_annotation_url(self, annotation_id: int) -> Response:
-        """Get the image as a URL
-
-        Example::
-            >>> from pyrostorage import client
-            >>> api_client = client.Client("http://pyro-storage.herokuapp.com", "MY_LOGIN", "MY_PWD")
-            >>> response = api_client.get_annotation_url(1)
-
-        Args:
-            annotation_id: the identifier of the annotation entry
-
-        Returns:
-            HTTP response containing the URL to the annotation content
-        """
-
-        return requests.get(self.routes["get-annotation-url"].format(annotation_id=annotation_id), headers=self.headers)

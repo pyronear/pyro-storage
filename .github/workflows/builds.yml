@@ -29,12 +29,11 @@ jobs:
           S3_SECRET_KEY: ${{ secrets.S3_SECRET_KEY }}
           S3_REGION: ${{ secrets.S3_REGION }}
           S3_ENDPOINT_URL: ${{ secrets.S3_ENDPOINT_URL }}
-        run: docker-compose up -d --build
-      - name: Docker sanity check
-        run: sleep 20 && nc -vz localhost 8080
-      - name: Ping server
-        run: curl http://localhost:8080/docs
-
+        run: |
+          docker compose up -d --build --wait
+          docker compose logs backend
+          nc -vz localhost 8080
+          curl http://localhost:8080/docs
   client:
     runs-on: ${{ matrix.os }}
     strategy:
