@@ -47,7 +47,6 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Register a new wildfire detection")
 async def create_detection(
-    background_tasks: BackgroundTasks,
     bboxes: str = Form(
         ...,
         description="string representation of list of detection localizations, each represented as a tuple of relative coords (max 3 decimals) in order: xmin, ymin, xmax, ymax, conf",

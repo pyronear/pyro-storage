@@ -104,13 +104,3 @@ async def get_current_user(
     """Dependency to use as fastapi.security.Security with scopes"""
     token_payload = get_jwt(security_scopes, token)
     return cast(User, await users.get(token_payload.sub, strict=True))
-
-
-async def dispatch_webhook(url: str, payload: BaseModel) -> None:
-    async with AsyncClient(timeout=5) as client:
-        try:
-            response = await client.post(url, json=payload.model_dump_json())
-            response.raise_for_status()
-            logger.info(f"Successfully dispatched to {url}")
-        except HTTPStatusError as e:
-            logger.error(f"Error dispatching webhook to {url}: {e.response.status_code} - {e.response.text}")

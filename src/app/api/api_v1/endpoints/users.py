@@ -13,7 +13,6 @@ from app.crud import UserCRUD
 from app.models import User, UserRole
 from app.schemas.login import TokenPayload
 from app.schemas.users import Cred, CredHash, UserCreate
-from app.services.telemetry import telemetry_client
 
 router = APIRouter()
 
@@ -27,20 +26,10 @@ async def _create_user(payload: UserCreate, users: UserCRUD, requester_id: Union
     user = await users.create(
         User(
             login=payload.login,
-            _id=payload._id,
+            id=payload._id,
             hashed_password=hash_password(payload.password),
             role=payload.role,
         )
-    )
-
-    # Enrich user data
-    telemetry_client.alias(user.id, payload.login)
-
-    # Assume the requester is the new user if none was specified
-    telemetry_client.capture(
-        requester_id if isinstance(requester_id, int) else user.id,
-        event="user-creation",
-        properties={"created_user_id": user.id},
     )
     return user
 
@@ -60,7 +49,6 @@ async def get_user(
     users: UserCRUD = Depends(get_user_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> User:
-    telemetry_client.capture(token_payload.sub, event="user-get", properties={"user_id": user_id})
     return cast(User, await users.get(user_id, strict=True))
 
 
@@ -69,7 +57,6 @@ async def fetch_users(
     users: UserCRUD = Depends(get_user_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> List[User]:
-    telemetry_client.capture(token_payload.sub, event="user-fetch")
     return [elt for elt in await users.fetch_all()]
 
 
@@ -80,7 +67,6 @@ async def update_user_password(
     users: UserCRUD = Depends(get_user_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> User:
-    telemetry_client.capture(token_payload.sub, event="user-pwd", properties={"user_id": user_id})
     pwd = hash_password(payload.password)
     return await users.update(user_id, CredHash(hashed_password=pwd))
 
@@ -91,5 +77,4 @@ async def delete_user(
     users: UserCRUD = Depends(get_user_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> None:
-    telemetry_client.capture(token_payload.sub, event="user-deletion", properties={"user_id": user_id})
     await users.delete(user_id)

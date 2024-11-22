@@ -59,7 +59,6 @@ async def heartbeat(
     sources: SourceCRUD = Depends(get_source_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[Role.CAMERA]),
 ) -> Source:
-    # telemetry_client.capture(f"camera|{token_payload.sub}", event="sources-heartbeat")
     return await sources.update(token_payload.sub, LastActive(last_active_at=datetime.utcnow()))
 
 

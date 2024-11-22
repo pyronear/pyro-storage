@@ -49,19 +49,6 @@ USER_TABLE = [
     },
 ]
 
-ORGANIZATION_TABLE = [
-    {
-        "id": 1,
-        "name": "-1",
-        "telegram_id": None,
-    },
-    {
-        "id": 2,
-        "name": "-2",
-        "telegram_id": None,
-    },
-]
-
 CAM_TABLE = [
     {
         "id": 1,
@@ -238,8 +225,8 @@ async def detection_session(user_session: AsyncSession, camera_session: AsyncSes
         pass
 
 
-def get_token(access_id: int, scopes: str, id: int) -> Dict[str, str]:
-    token_data = {"sub": str(access_id), "scopes": scopes, "_id": id}
+def get_token(access_id: int, scopes: str, _id: int) -> Dict[str, str]:
+    token_data = {"sub": str(access_id), "scopes": scopes, "_id": _id}
     token = create_access_token(token_data)
     return {"Authorization": f"Bearer {token}"}
 
@@ -256,7 +243,7 @@ def pytest_configure():
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
         for entry in USER_TABLE
     ]
-    pytest.camera_table = [
+    pytest.source_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
         for entry in CAM_TABLE
     ]
@@ -264,7 +251,7 @@ def pytest_configure():
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
         for entry in DET_TABLE
     ]
-    pytest.webhook_table = [
+    pytest.annotation_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in WEBHOOK_TABLE
+        for entry in DET_TABLE
     ]

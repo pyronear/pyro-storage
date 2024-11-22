@@ -25,4 +25,4 @@ class Token(BaseModel):
 class TokenPayload(BaseModel):
     sub: int = Field(..., gt=0)
     scopes: List[Role] = Field([], description="scopes of the token")
-    _id: int = Field(..., gt=0)
+    id: int = Field(..., gt=0)

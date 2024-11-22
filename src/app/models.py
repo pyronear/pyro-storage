@@ -11,7 +11,7 @@ from sqlmodel import Field, SQLModel
 
 from app.core.config import settings
 
-__all__ = ["Detection", "Source", "User", ""]
+__all__ = ["Annotation", "Detection", "Source", "User"]
 
 
 class UserRole(str, Enum):
@@ -41,7 +41,7 @@ class Origin(str, Enum):
 class User(SQLModel, table=True):
     __tablename__ = "users"
     id: int = Field(None, primary_key=True)
-    sources_id: int = Field(..., foreign_key="sources.id", nullable=True)
+    source_id: int = Field(..., foreign_key="sources.id", nullable=True)
     role: UserRole = Field(UserRole.USER, nullable=False)
     # Allow sign-up/in via login + password
     login: str = Field(..., index=True, unique=True, min_length=2, max_length=50, nullable=False)
@@ -70,7 +70,7 @@ class Detection(SQLModel, table=True):
     __tablename__ = "detections"
     id: int = Field(None, primary_key=True)
     source_id: int = Field(..., foreign_key="sources.id", nullable=False)
-    annotation_id: int = Field(None, foreign_key="annotation.id")
+    annotation_id: int = Field(None, foreign_key="annotations.id")
     azimuth: float = Field(..., gt=0, lt=360)
     bucket_key: str
     bboxes: str = Field(..., min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=False)

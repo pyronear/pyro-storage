@@ -12,7 +12,6 @@ from app.core.security import create_access_token, verify_password
 from app.crud import UserCRUD
 from app.models import Role
 from app.schemas.login import Token, TokenPayload
-from app.services.telemetry import telemetry_client
 
 router = APIRouter(redirect_slashes=True)
 
@@ -32,7 +31,6 @@ async def login_with_creds(
     user = await users.get_by_login(form_data.username)
     if user is None or user.hashed_password is None or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials.")
-    telemetry_client.capture(user.id, event="user-login", properties={"method": "credentials"})
     # create access token using user user_id/user_scopes
     token_data = {"sub": str(user.id), "scopes": user.role.split(), "_id": user._id}
     token = create_access_token(token_data, settings.JWT_UNLIMITED)
