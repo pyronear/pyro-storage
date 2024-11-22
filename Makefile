@@ -1,58 +1,58 @@
 # this target runs checks on all files
 quality:
-	isort . -c
+	ruff format --check .
 	ruff check .
 	mypy
-	pydocstyle
-	black --check .
-	bandit -r . -c pyproject.toml
 
 # this target runs checks on all files and potentially modifies some of them
 style:
-	isort .
-	black .
-	ruff --fix .
+	ruff format .
+	ruff check --fix .
 
 # Pin the dependencies
 lock:
-	poetry lock
+	poetry lock --no-update
 
 # Build the docker
 build:
-	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
-	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
+	poetry export -f requirements.txt --without-hashes --output requirements.txt
+	docker build -f src/Dockerfile . -t pyronear/alert-api:latest
 
 # Run the docker
 run:
-	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
-	docker-compose up -d --build
+	poetry export -f requirements.txt --without-hashes --output requirements.txt
+	docker compose up -d --build --wait
 
 # Run the docker
 stop:
-	docker-compose down
-
-run-dev:
-	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
-	poetry export -f requirements.txt --without-hashes --with dev --output src/requirements-dev.txt
-	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
-	docker-compose -f docker-compose-dev.yml up -d --build
-
-stop-dev:
-	docker-compose -f docker-compose-dev.yml down
+	docker compose down
 
 # Run tests for the library
+# the "-" are used to launch the next command even if a command fail
 test:
-	poetry export -f requirements.txt --without-hashes --output src/app/requirements.txt
-	poetry export -f requirements.txt --without-hashes --with dev --output src/requirements-dev.txt
-	docker build src/. -t pyronear/storage-api:python3.8-alpine3.10
-	docker-compose -f docker-compose-dev.yml up -d --build
-	docker-compose exec -T backend coverage run -m pytest tests/
-	docker-compose -f docker-compose-dev.yml down
+	poetry export -f requirements.txt --without-hashes --with test --output requirements.txt
+	docker compose -f docker-compose.dev.yml up -d --build --wait
+	- docker compose -f docker-compose.dev.yml exec -T backend pytest --cov=app
+	docker compose -f docker-compose.dev.yml down
+
+build-client:
+	pip install -e client/.
 
 # Run tests for the Python client
-test-client:
-	cd client && coverage run -m pytest tests/
+# the "-" are used to launch the next command even if a command fail
+test-client: build-client
+	poetry export -f requirements.txt --without-hashes --output requirements.txt
+	docker compose -f docker-compose.dev.yml up -d --build --wait
+	- cd client && pytest --cov=pyroclient tests/ && cd ..
+	docker compose -f docker-compose.dev.yml down
 
 # Check that docs can build for client
-docs:
+docs-client:
 	sphinx-build client/docs/source client/docs/_build -a
+
+
+e2e:
+	poetry export -f requirements.txt --without-hashes --output requirements.txt
+	docker compose -f docker-compose.dev.yml up -d --build --wait
+	- python scripts/test_e2e.py
+	docker compose -f docker-compose.dev.yml down

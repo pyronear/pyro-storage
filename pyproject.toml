@@ -3,66 +3,143 @@ requires = ["poetry>=1.0"]
 build-backend = "poetry.masonry.api"
 
 [tool.poetry]
-name = "pyro-storage"
-version = "0.1.1.dev0"
-description = "Backend for visual data curation about wildfires"
+name = "pyro-api"
+version = "0.1.2.dev0"
+description = "Backend for wildfire prevention, detection and monitoring"
 authors = ["Pyronear <contact@pyronear.org>"]
 license = "Apache-2.0"
-readme = "README.md"
-repository = "https://github.com/pyronear/pyro-storage"
-keywords = ["backend", "api", "storage"]
 
 [tool.poetry.dependencies]
-python = "^3.8"
-uvicorn = ">=0.11.1,<1.0.0"
-fastapi = ">=0.89.0,<1.0.0"
-bcrypt = "^3.2.0"
+python = "^3.9"
+fastapi = ">=0.109.1,<1.0.0"
+sqlmodel = "^0.0.16"
+pydantic = ">=2.0.0,<3.0.0"
+pydantic-settings = ">=2.0.0,<3.0.0"
+requests = "^2.32.0"
+PyJWT = "^2.8.0"
 passlib = { version = "^1.7.4", extras = ["bcrypt"] }
-databases = { version = ">=0.2.6,<=0.4.0", extras = ["postgresql"] }
-python-jose = "^3.2.0"
-SQLAlchemy = "^1.3.12"
-python-multipart = "==0.0.5"
-aiofiles = "==0.6.0"
-requests = "^2.31.0"
-sentry-sdk = "^1.14.0"
+uvicorn = ">=0.11.1,<1.0.0"
+asyncpg = ">=0.25.0,<1.0.0"
+alembic = "^1.8.1"
+sentry-sdk = { version = "^2.8.0", extras = ["fastapi"] }
+posthog = "^3.0.0"
+prometheus-fastapi-instrumentator = "^6.1.0"
+python-multipart = "==0.0.7"
+python-magic = "^0.4.17"
 boto3 = "^1.26.0"
+httpx = "^0.24.0"
 
-ruff = { version = ">=0.0.260,<1.0.0", optional = true }
-isort = { version = "^5.7.0", optional = true }
-mypy = { version = "^1.2.0", optional = true }
-black = { version = "==22.3.0", optional = true }
-pydocstyle = { version = "^6.0.0", extras = ["toml"], optional = true }
-autoflake = { version = "^1.5.0", optional = true }
-bandit = { version = "^1.7.0", extras = ["toml"], optional = true }
-pre-commit = { version = "^2.17.0", optional = true }
+[tool.poetry.group.quality]
+optional = true
 
-[tool.poetry.dev-dependencies]
-pytest = ">=5.3.2,<8.0.0"
+[tool.poetry.group.quality.dependencies]
+ruff = "==0.7.1"
+mypy = "==1.10.0"
+types-requests = ">=2.0.0"
+types-python-dateutil = "^2.8.0"
+sqlalchemy-stubs = "^0.4"
+types-passlib = ">=1.7.0"
+pre-commit = "^3.8.0"
+
+[tool.poetry.group.test]
+optional = true
+
+[tool.poetry.group.test.dependencies]
+pytest = ">=7.3.2,<9.0.0"
 pytest-asyncio = ">=0.17.0,<1.0.0"
-coverage = ">=4.5.4,<7.0.0"
-aiosqlite = ">=0.16.0,<1.0.0"
+pytest-cov = "^4.0.0"
+pytest-pretty = "^1.0.0"
 httpx = ">=0.23.0"
-asyncpg = ">=0.20.0,<1.0.0"
-
-[tool.poetry.extras]
-quality = ["ruff", "isort", "mypy", "pydocstyle", "black", "autoflake", "bandit", "pre-commit"]
+aiosqlite = ">=0.16.0,<1.0.0"
 
 [tool.coverage.run]
-source = ["src/app", "client/pyrostorage"]
+source = ["src/app", "client/pyroclient"]
 
 [tool.ruff]
-ignore = ["E402", "F403", "E731"]
-exclude = [".git", "venv*", "build", "client/docs"]
 line-length = 120
-target-version = "py38"
+target-version = "py39"
+preview = true
 
-[tool.ruff.per-file-ignores]
-"**/__init__.py" = ["F401"]
+[tool.ruff.lint]
+select = [
+    "F",  # pyflakes
+    "E",  # pycodestyle errors
+    "W",  # pycodestyle warnings
+    "I",  # isort
+    "N",  # pep8-naming
+    # "D101", "D103",  # pydocstyle missing docstring in public function/class
+    "D201","D202","D207","D208","D214","D215","D300","D301","D417", "D419",  # pydocstyle
+    "YTT",  # flake8-2020
+    "ANN",  # flake8-annotations
+    "ASYNC",  # flake8-async
+    "S",  # flake8-bandit
+    "BLE",  # flake8-blind-except
+    "B",  # flake8-bugbear
+    "A",  # flake8-builtins
+    "COM",  # flake8-commas
+    "CPY",  # flake8-copyright
+    "C4",  # flake8-comprehensions
+    "T10",  # flake8-debugger
+    "ISC",  # flake8-implicit-str-concat
+    "ICN",  # flake8-import-conventions
+    "LOG",  # flake8-logging
+    "PIE",  # flake8-pie
+    "T20",  # flake8-print
+    "PYI",  # flake8-pyi
+    "PT",  # flake8-pytest-style
+    "RET",  # flake8-return
+    "SIM",  # flake8-simplify
+    "ARG",  # flake8-unused-arguments
+    "PTH",  # flake8-use-pathlib
+    "PERF",  # perflint
+    "NPY",  # numpy
+    "FURB",  # refurb
+    "RUF",  # ruff specific
+]
+ignore = [
+    "E501",  # line too long, handled by black
+    "B008",  # do not perform function calls in argument defaults
+    "B904",  # raise from
+    "C901",  # too complex
+    "F403",  # star imports
+    "E731",  # lambda assignment
+    "C416",  # list comprehension to list()
+    "ANN101",  # missing type annotations on self
+    "ANN102",  # missing type annotations on cls
+    "ANN002",  # missing type annotations on *args
+    "ANN003",  # missing type annotations on **kwargs
+    "COM812",  # trailing comma missing
+    "ISC001",  # implicit string concatenation (handled by format)
+]
+exclude = [".git"]
 
-[tool.ruff.flake8-quotes]
+[tool.ruff.lint.flake8-quotes]
 docstring-quotes = "double"
 
+[tool.ruff.lint.isort]
+known-first-party = ["app", "tests", "pyroclient"]
+known-third-party = ["fastapi"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["I001", "F401", "CPY001"]
+"scripts/**.py" = ["D", "T201", "S101", "ANN", "RUF030"]
+".github/**.py" = ["D", "T201", "ANN"]
+"src/tests/**.py" = ["D103", "CPY001", "S101", "T201", "ANN001", "ANN201", "ANN202", "ARG001", "RUF030"]
+"src/migrations/versions/**.py" = ["CPY001"]
+"src/migrations/**.py" = ["ANN"]
+"src/app/main.py" = ["ANN"]
+"src/app/schemas/**.py" = ["A"]
+"src/app/models.py" = ["A"]
+"client/docs/**.py" = ["E402", "D103", "ANN", "A001", "ARG001"]
+"client/setup.py" = ["T201"]
+"client/tests/**.py" = ["D103", "CPY001", "S101", "T201", "ANN", "ARG001", "RUF030"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
 [tool.mypy]
+python_version = "3.9"
 mypy_path = "src/"
 files = "src/app"
 show_error_codes = true
@@ -72,33 +149,17 @@ warn_redundant_casts = true
 no_implicit_optional = true
 check_untyped_defs = true
 implicit_reexport = false
+explicit_package_bases = true
+plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
 module = [
-    "sqlalchemy.*",
-    "qarnot.*",
-    "jose.*",
-    "passlib.*",
-    "app.*",
-    "requests.*",
+    "magic",
+    "boto3",
+    "botocore.*",
+    "databases",
+    "posthog",
+    "prometheus_fastapi_instrumentator",
+    "pydantic_settings",
 ]
 ignore_missing_imports = true
-
-[tool.isort]
-line_length = 120
-src_paths = ["src/"]
-skip_glob = ["client/*", "**/__init__.py"]
-known_first_party = ["pyrostorage", "app"]
-known_third_party = ["fastapi"]
-
-[tool.pydocstyle]
-select = "D300,D301,D417"
-match = ".*\\.py"
-
-[tool.black]
-line-length = 120
-target-version = ['py38']
-
-[tool.bandit]
-exclude_dirs = []
-skips = ["B101"]

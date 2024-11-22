@@ -1,8 +1,8 @@
-**************************************************
-Pyro-storage: data curation for wildfire detection
-**************************************************
+****************************************
+Pyro-client: alerts for forest wildfires
+****************************************
 
-The :mod:`pyrostorage` package provides tools for wildfire data curation.
+The :mod:`pyroclient` package lets you interact with the Pyronear API in a simplified pythonic way.
 
 
 .. toctree::

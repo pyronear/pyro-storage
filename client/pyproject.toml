@@ -3,15 +3,15 @@ requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "pyrostorage"
-description = "Python Client for Pyronear data curation API"
+name = "pyroclient"
+description = "Python Client for Pyronear wildfire alert API"
 authors = [
     {name = "Pyronear", email = "contact@pyronear.org"}
 ]
 readme = "README.md"
 requires-python = ">=3.8,<4"
 license = {file = "LICENSE"}
-keywords = ["backend", "data", "storage", "client", "api"]
+keywords = ["backend", "wildfire", "alert", "client", "api"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
@@ -28,23 +28,17 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "requests>=2.24.0",
+    "requests>=2.31.0,<3.0.0",
 ]
 
 [project.optional-dependencies]
 test = [
     "pytest>=5.3.2",
-    "coverage[toml]>=4.5.4",
+    "pytest-cov>=3.0.0,<5.0.0",
+    "pytest-pretty>=1.0.0,<2.0.0",
 ]
 quality = [
-    "flake8>=3.9.0",
-    "isort>=5.7.0",
-    "mypy>=0.812",
-    "pydocstyle[toml]>=6.0.0",
-    "black>=22.1,<23.0",
-    "autoflake>=1.5.0,<2.0.0",
-    "bandit[toml]>=1.7.0,<1.8.0",
-    "pre-commit>=2.17.0,<3.0.0",
+    "mypy==1.4.1",
 ]
 docs = [
     "sphinx>=3.0.0,!=3.5.0",
@@ -58,16 +52,10 @@ docs = [
 dev = [
     # test
     "pytest>=5.3.2",
-    "coverage[toml]>=4.5.4",
+    "pytest-cov>=3.0.0,<5.0.0",
+    "pytest-pretty>=1.0.0,<2.0.0",
     # style
-    "flake8>=3.9.0",
-    "isort>=5.7.0",
-    "mypy>=0.812",
-    "pydocstyle[toml]>=6.0.0",
-    "black>=22.1,<23.0",
-    "autoflake>=1.5.0,<2.0.0",
-    "bandit[toml]>=1.7.0,<1.8.0",
-    "pre-commit>=2.17.0,<3.0.0",
+    "mypy==1.4.1",
     # docs
     "sphinx>=3.0.0,!=3.5.0",
     "sphinxemoji>=0.1.8",
@@ -78,27 +66,23 @@ dev = [
 ]
 
 [project.urls]
-documentation = "https://pyronear.org/pyro-storage"
-repository = "https://github.com/pyronear/pyro-storage/client"
-tracker = "https://github.com/pyronear/pyro-storage/issues"
+documentation = "https://pyronear.org/pyro-api"
+repository = "https://github.com/pyronear/pyro-api/client"
+tracker = "https://github.com/pyronear/pyro-api/issues"
 
 [tool.setuptools]
 zip-safe = true
 
 [tool.setuptools.packages.find]
-exclude = ["docs*", "scripts*", "tests*"]
-
-[tool.coverage.run]
-source = ["pyrostorage"]
+exclude = ["docs*", "tests*"]
 
 [tool.mypy]
-files = "pyrostorage/"
+files = "pyroclient/"
 show_error_codes = true
 pretty = true
 warn_unused_ignores = true
 warn_redundant_casts = true
 no_implicit_optional = true
-disallow_untyped_calls = true
 check_untyped_defs = true
 implicit_reexport = false
 
@@ -108,25 +92,5 @@ module = [
 ]
 ignore_missing_imports = true
 
-[tool.isort]
-line_length = 120
-src_paths = ["client", "tests"]
-skip_glob = "**/__init__.py"
-known_first_party = ["pyrostorage"]
-
-[tool.pydocstyle]
-select = "D300,D301,D417"
-match = ".*\\.py"
-
-[tool.black]
-line-length = 120
-target-version = ['py38']
-
-[tool.autoflake]
-remove-unused-variables = true
-remove-all-unused-imports = true
-ignore-init-module-imports = true
-
-[tool.bandit]
-exclude_dirs = [".github/collect_env.py"]
-skips = ["B101"]
+[tool.pytest.ini_options]
+testpaths = ["pyroclient/"]

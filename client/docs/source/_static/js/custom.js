@@ -1,25 +1,14 @@
 // Based on https://github.com/huggingface/transformers/blob/master/docs/source/_static/js/custom.js
 
-
-// These two things need to be updated at each release for the version selector.
-// Last stable version
-const stableVersion = "v0.1.0"
-// Dictionary doc folder to label. The last stable version should have an empty key.
-const versionMapping = {
-    "latest": "latest",
-    "": "v0.1.1 (stable)",
-    "v0.1.0": "v0.1.0",
-}
-
 function addGithubButton() {
     const div = `
         <div class="github-repo">
             <a
                 class="github-button"
-                href="https://github.com/pyronear/pyro-storage"
+                href="https://github.com/pyronear/pyro-api"
                 data-size="large"
                 data-show-count="true"
-                aria-label="Star pyronear/pyro-storage on GitHub">Star</a>
+                aria-label="Star pyronear/pyro-api on GitHub">Star</a>
         </div>
     `;
     document.querySelector(".sidebar-brand").insertAdjacentHTML('afterend', div);

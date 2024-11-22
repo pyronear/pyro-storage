@@ -1,41 +1,63 @@
-import time
-from copy import deepcopy
-
 import pytest
-from requests import ConnectionError
+from requests.exceptions import ConnectionError as ConnError
+from requests.exceptions import ReadTimeout
 
-from pyrostorage import client
-from pyrostorage.exceptions import HTTPRequestException
-
-
-def _test_route_return(response, return_type, status_code=200):
-    assert response.status_code == status_code
-    assert isinstance(response.json(), return_type)
-
-    return response.json()
+from pyroclient.client import Client
+from pyroclient.exceptions import HTTPRequestError
 
 
-def test_client():
+@pytest.mark.parametrize(
+    ("token", "host", "timeout", "expected_error"),
+    [
+        ("invalid_token", "http://localhost:5050", 10, HTTPRequestError),
+        (pytest.admin_token, "http://localhost:8003", 10, ConnError),
+        (pytest.admin_token, "http://localhost:5050", 0.00001, ReadTimeout),
+        (pytest.admin_token, "http://localhost:5050", 10, None),
+    ],
+)
+def test_client_constructor(token, host, timeout, expected_error):
+    if expected_error is None:
+        Client(token, host, timeout=timeout)
+    else:
+        with pytest.raises(expected_error):
+            Client(token, host, timeout=timeout)
 
-    # Wrong credentials
-    with pytest.raises(HTTPRequestException):
-        client.Client("http://localhost:8080", "invalid_login", "invalid_pwd")
 
-    # Incorrect URL port
-    with pytest.raises(ConnectionError):
-        client.Client("http://localhost:8003", "dummy_login", "dummy_pwd")
+@pytest.fixture(scope="session")
+def test_cam_workflow(cam_token, mock_img):
+    cam_client = Client(cam_token, "http://localhost:5050", timeout=10)
+    response = cam_client.heartbeat()
+    assert response.status_code == 200
+    # Check that last_image gets changed
+    assert response.json()["last_image"] is None
+    response = cam_client.update_last_image(mock_img)
+    assert response.status_code == 200, response.__dict__
+    assert isinstance(response.json()["last_image"], str)
+    # Check that adding bboxes works
+    with pytest.raises(ValueError, match="bboxes must be a non-empty list of tuples"):
+        cam_client.create_detection(mock_img, 123.2, None)
+    with pytest.raises(ValueError, match="bboxes must be a non-empty list of tuples"):
+        cam_client.create_detection(mock_img, 123.2, [])
+    response = cam_client.create_detection(mock_img, 123.2, [(0, 0, 1.0, 0.9, 0.5)])
+    assert response.status_code == 201, response.__dict__
+    response = cam_client.create_detection(mock_img, 123.2, [(0, 0, 1.0, 0.9, 0.5), (0.2, 0.2, 0.7, 0.7, 0.8)])
+    assert response.status_code == 201, response.__dict__
+    return response.json()["id"]
 
-    api_client = client.Client("http://localhost:8080", "dummy_login", "dummy_pwd")
 
-    # Media
-    media_id = _test_route_return(api_client.create_media(media_type="image"), dict, 201)["id"]
-    # Annotation
-    _test_route_return(api_client.create_annotation(media_id=media_id), dict, 201)["id"]
+def test_agent_workflow(test_cam_workflow, agent_token):
+    # Agent workflow
+    agent_client = Client(agent_token, "http://localhost:5050", timeout=10)
+    response = agent_client.label_detection(test_cam_workflow, True)
+    assert response.status_code == 200, response.__dict__
 
-    # Check token refresh
-    prev_headers = deepcopy(api_client.headers)
-    # In case the 2nd token creation request is done in the same second, since the expiration is truncated to the
-    # second, it returns the same token
-    time.sleep(1)
-    api_client.refresh_token("dummy_login", "dummy_pwd")
-    assert prev_headers != api_client.headers
+
+def test_user_workflow(test_cam_workflow, user_token):
+    # User workflow
+    user_client = Client(user_token, "http://localhost:5050", timeout=10)
+    response = user_client.get_detection_url(test_cam_workflow)
+    assert response.status_code == 200, response.__dict__
+    response = user_client.fetch_detections()
+    assert response.status_code == 200, response.__dict__
+    response = user_client.fetch_unlabeled_detections("2018-06-06T00:00:00")
+    assert response.status_code == 200, response.__dict__

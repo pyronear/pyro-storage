@@ -1,14 +1,14 @@
-pyrostorage.client
-##################
+pyroclient.client
+#################
 
-The client submodule contains the core definition of the API client.
+The client subpackage contains the core definition of the API client.
 
 
-.. currentmodule:: pyrostorage.client
+.. currentmodule:: pyroclient.client
 
 
 API Client
 ----------
 
 .. autoclass:: Client
-   :members:
+	:members:

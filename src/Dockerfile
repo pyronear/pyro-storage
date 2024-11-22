@@ -1,4 +1,4 @@
-FROM tiangolo/uvicorn-gunicorn-fastapi:python3.8-alpine3.10
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.9-alpine3.14
 
 WORKDIR /app
 
@@ -8,13 +8,16 @@ ENV PYTHONUNBUFFERED 1
 ENV PYTHONPATH "${PYTHONPATH}:/app"
 
 # copy requirements file
-COPY app/requirements.txt /app/requirements.txt
+COPY requirements.txt /app/requirements.txt
 
 # install dependencies
 RUN set -eux \
-    && apk add --no-cache --virtual .build-deps build-base postgresql-dev gcc libffi-dev libressl-dev musl-dev \
-    && pip install -r /app/requirements.txt \
-    && rm -rf /root/.cache/pip
+    && apk add --no-cache curl libmagic \
+    && pip install --no-cache-dir uv \
+    && uv pip install --no-cache --system -r /app/requirements.txt \
+    && rm -rf /root/.cache
 
 # copy project
-COPY . /app
+COPY src/alembic.ini /app/alembic.ini
+COPY src/migrations /app/migrations
+COPY src/app /app/app
