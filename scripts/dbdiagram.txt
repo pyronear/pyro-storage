@@ -1,0 +1,54 @@
+Table "Annotation" as A {
+  "id" int [not null]
+  "gif_url" string [not null]
+  "label" label [null]
+  Indexes {
+    (id) [pk]
+  }
+}
+
+Table "Detection" as D{
+  "id" int [not null]
+  "created_at" timestamp [not null]
+  "source_id" int [ref: > S.id]
+  "annotation_id" int [ref: > A.id]
+  "azimuth" int
+  "img_url" string [not null]
+  "model_prediction" string [null]
+  "bbox" string [null]
+  "bbox_verified" bool [null]
+  Indexes {
+    (id) [pk]
+  }
+}
+
+Table "User" as U {
+  "id" int [not null]
+  "sources_id" Array [ref: > S.id, not null]
+  "role" userrole [not null]
+  "login" varchar [not null]
+  "hashed_password" varchar [not null]
+  "created_at" timestamp [not null] 
+  Indexes {
+    (id, login) [pk]
+  }
+}
+
+Table "Sources" as S {
+  "id" int [not null]
+  "name" varchar [not null]
+  "camera_id" int [null]
+  "origin" origin [not null]
+  "origin_url" varchar [null]
+}
+
+Enum "origin" {
+  "alertAPI"
+  "alertwildfire"
+}
+
+Enum "label" {
+  "wildfire"
+  "nothing"
+  "unsure"
+}
