@@ -13,7 +13,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
 from app.core.security import hash_password
-from app.models import User, UserRole
+from app.models import Source, User, UserRole
 
 __all__ = ["get_session", "init_db"]
 
@@ -41,14 +41,20 @@ async def init_db() -> None:
         if not user:
             pwd = hash_password(settings.SUPERADMIN_PWD)
             session.add(
+                Source(
+                    name="ADMIN",
+                )
+            )
+            await session.commit()
+            session.add(
                 User(
                     login=settings.SUPERADMIN_LOGIN,
                     hashed_password=pwd,
                     role=UserRole.ADMIN,
-                    sources_id=None,
+                    source_id=1,
                 )
             )
-        await session.commit()
+            await session.commit()
 
 
 async def main() -> None:

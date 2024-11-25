@@ -12,7 +12,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
             None,
             {
                 "name": "pyro-cam",
-                "_id": 1,
+                "source_id": 1,
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -23,7 +23,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
         ),
         (
             0,
-            {"name": "pyro-cam", "_id": 1, "angle_of_view": 90.0, "elevation": 30.0, "lat": 3.5},
+            {"name": "pyro-cam", "source_id": 1, "angle_of_view": 90.0, "elevation": 30.0, "lat": 3.5},
             422,
             None,
         ),
@@ -31,7 +31,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
             0,
             {
                 "name": "pyro-cam",
-                "_id": 1,
+                "source_id": 1,
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -44,7 +44,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
             1,
             {
                 "name": "pyro-cam",
-                "_id": 1,
+                "source_id": 1,
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -57,7 +57,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
             2,
             {
                 "name": "pyro-cam",
-                "_id": 2,
+                "source_id": 2,
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -69,9 +69,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
     ],
 )
 @pytest.mark.asyncio
-async def test_create_camera(
+async def test_create_source(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
+    source_session: AsyncSession,
     user_idx: Union[int, None],
     payload: Dict[str, Any],
     status_code: int,
@@ -82,7 +82,7 @@ async def test_create_camera(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.post("/sources", json=payload, headers=auth)
@@ -98,7 +98,7 @@ async def test_create_camera(
 
 
 @pytest.mark.parametrize(
-    ("user_idx", "cam_id", "status_code", "status_detail", "expected_idx"),
+    ("user_idx", "source_id", "status_code", "status_detail", "expected_idx"),
     [
         (None, 1, 401, "Not authenticated", None),
         (0, 0, 422, None, None),
@@ -109,11 +109,11 @@ async def test_create_camera(
     ],
 )
 @pytest.mark.asyncio
-async def test_get_camera(
+async def test_get_source(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
+    source_session: AsyncSession,
     user_idx: Union[int, None],
-    cam_id: int,
+    source_id: int,
     status_code: int,
     status_detail: Union[str, None],
     expected_idx: Union[int, None],
@@ -123,30 +123,30 @@ async def test_get_camera(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
-    response = await async_client.get(f"/sources/{cam_id}", headers=auth)
+    response = await async_client.get(f"/sources/{source_id}", headers=auth)
     assert response.status_code == status_code, print(response.__dict__)
     if isinstance(status_detail, str):
         assert response.json()["detail"] == status_detail
     if response.status_code // 100 == 2:
-        assert response.json() == pytest.camera_table[expected_idx]
+        assert response.json() == pytest.source_table[expected_idx]
 
 
 @pytest.mark.parametrize(
     ("user_idx", "status_code", "status_detail", "expected_response"),
     [
         (None, 401, "Not authenticated", None),
-        (0, 200, None, pytest.camera_table[0]),
-        (1, 200, None, pytest.camera_table[0]),
-        (2, 200, None, pytest.camera_table[1]),
+        (0, 200, None, pytest.source_table[0]),
+        (1, 200, None, pytest.source_table[0]),
+        (2, 200, None, pytest.source_table[1]),
     ],
 )
 @pytest.mark.asyncio
 async def test_fetch_sources(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
+    source_session: AsyncSession,
     user_idx: Union[int, None],
     status_code: int,
     status_detail: Union[str, None],
@@ -157,7 +157,7 @@ async def test_fetch_sources(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.get("/sources", headers=auth)
@@ -169,7 +169,7 @@ async def test_fetch_sources(
 
 
 @pytest.mark.parametrize(
-    ("user_idx", "cam_id", "status_code", "status_detail"),
+    ("user_idx", "source_id", "status_code", "status_detail"),
     [
         (None, 1, 401, "Not authenticated"),
         (0, 0, 422, None),
@@ -183,11 +183,11 @@ async def test_fetch_sources(
     ],
 )
 @pytest.mark.asyncio
-async def test_delete_camera(
+async def test_delete_source(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
+    source_session: AsyncSession,
     user_idx: Union[int, None],
-    cam_id: int,
+    source_id: int,
     status_code: int,
     status_detail: Union[str, None],
 ):
@@ -196,10 +196,10 @@ async def test_delete_camera(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
-    response = await async_client.delete(f"/sources/{cam_id}", headers=auth)
+    response = await async_client.delete(f"/sources/{source_id}", headers=auth)
     assert response.status_code == status_code, print(response.__dict__)
     if isinstance(status_detail, str):
         assert response.json()["detail"] == status_detail
@@ -208,7 +208,7 @@ async def test_delete_camera(
 
 
 @pytest.mark.parametrize(
-    ("user_idx", "cam_id", "status_code", "status_detail"),
+    ("user_idx", "source_id", "status_code", "status_detail"),
     [
         (None, 1, 401, "Not authenticated"),
         (0, 0, 422, None),
@@ -219,11 +219,11 @@ async def test_delete_camera(
     ],
 )
 @pytest.mark.asyncio
-async def test_create_camera_token(
+async def test_create_source_token(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
+    source_session: AsyncSession,
     user_idx: Union[int, None],
-    cam_id: int,
+    source_id: int,
     status_code: int,
     status_detail: Union[str, None],
 ):
@@ -232,10 +232,10 @@ async def test_create_camera_token(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
-    response = await async_client.post(f"/sources/{cam_id}/token", headers=auth)
+    response = await async_client.post(f"/sources/{source_id}/token", headers=auth)
     assert response.status_code == status_code, print(response.__dict__)
     if isinstance(status_detail, str):
         assert response.json()["detail"] == status_detail
@@ -247,7 +247,7 @@ async def test_create_camera_token(
 
 
 @pytest.mark.parametrize(
-    ("cam_idx", "status_code", "status_detail"),
+    ("source_idx", "status_code", "status_detail"),
     [
         (None, 401, "Not authenticated"),
         (0, 200, None),
@@ -257,17 +257,17 @@ async def test_create_camera_token(
 @pytest.mark.asyncio
 async def test_heartbeat(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
-    cam_idx: Union[int, None],
+    source_session: AsyncSession,
+    source_idx: Union[int, None],
     status_code: int,
     status_detail: Union[str, None],
 ):
     auth = None
-    if isinstance(cam_idx, int):
+    if isinstance(source_idx, int):
         auth = pytest.get_token(
-            pytest.camera_table[cam_idx]["id"],
-            ["camera"],
-            pytest.camera_table[cam_idx]["_id"],
+            pytest.source_table[source_idx]["id"],
+            ["source"],
+            pytest.source_table[source_idx]["id"],
         )
 
     response = await async_client.patch("/sources/heartbeat", headers=auth)
@@ -276,15 +276,15 @@ async def test_heartbeat(
         assert response.json()["detail"] == status_detail
     if response.status_code // 100 == 2:
         assert isinstance(response.json()["last_active_at"], str)
-        if pytest.camera_table[cam_idx]["last_active_at"] is not None:
-            assert response.json()["last_active_at"] > pytest.camera_table[cam_idx]["last_active_at"]
+        if pytest.source_table[source_idx]["last_active_at"] is not None:
+            assert response.json()["last_active_at"] > pytest.source_table[source_idx]["last_active_at"]
         assert {k: v for k, v in response.json().items() if k != "last_active_at"} == {
-            k: v for k, v in pytest.camera_table[cam_idx].items() if k != "last_active_at"
+            k: v for k, v in pytest.source_table[source_idx].items() if k != "last_active_at"
         }
 
 
 @pytest.mark.parametrize(
-    ("cam_idx", "status_code", "status_detail"),
+    ("source_idx", "status_code", "status_detail"),
     [
         (None, 401, "Not authenticated"),
         (0, 200, None),
@@ -294,18 +294,18 @@ async def test_heartbeat(
 @pytest.mark.asyncio
 async def test_update_image(
     async_client: AsyncClient,
-    camera_session: AsyncSession,
+    source_session: AsyncSession,
     mock_img: bytes,
-    cam_idx: Union[int, None],
+    source_idx: Union[int, None],
     status_code: int,
     status_detail: Union[str, None],
 ):
     auth = None
-    if isinstance(cam_idx, int):
+    if isinstance(source_idx, int):
         auth = pytest.get_token(
-            pytest.camera_table[cam_idx]["id"],
-            ["camera"],
-            pytest.camera_table[cam_idx]["_id"],
+            pytest.source_table[source_idx]["id"],
+            ["source"],
+            pytest.source_table[source_idx]["id"],
         )
 
     response = await async_client.patch(
@@ -316,11 +316,11 @@ async def test_update_image(
         assert response.json()["detail"] == status_detail
     if response.status_code // 100 == 2:
         assert isinstance(response.json()["last_active_at"], str)
-        if pytest.camera_table[cam_idx]["last_active_at"] is not None:
-            assert response.json()["last_active_at"] > pytest.camera_table[cam_idx]["last_active_at"]
+        if pytest.source_table[source_idx]["last_active_at"] is not None:
+            assert response.json()["last_active_at"] > pytest.source_table[source_idx]["last_active_at"]
         assert isinstance(response.json()["last_image"], str)
-        if pytest.camera_table[cam_idx]["last_image"] is not None:
-            assert response.json()["last_image"] != pytest.camera_table[cam_idx]["last_image"]
+        if pytest.source_table[source_idx]["last_image"] is not None:
+            assert response.json()["last_image"] != pytest.source_table[source_idx]["last_image"]
         assert {k: v for k, v in response.json().items() if k not in {"last_active_at", "last_image"}} == {
-            k: v for k, v in pytest.camera_table[cam_idx].items() if k not in {"last_active_at", "last_image"}
+            k: v for k, v in pytest.source_table[source_idx].items() if k not in {"last_active_at", "last_image"}
         }

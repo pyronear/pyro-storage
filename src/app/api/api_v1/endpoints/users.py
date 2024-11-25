@@ -3,7 +3,7 @@
 # This program is licensed under the Apache License 2.0.
 # See LICENSE or go to <https://www.apache.org/licenses/LICENSE-2.0> for full license details.
 
-from typing import List, Union, cast
+from typing import List, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Security, status
 
@@ -17,21 +17,20 @@ from app.schemas.users import Cred, CredHash, UserCreate
 router = APIRouter()
 
 
-async def _create_user(payload: UserCreate, users: UserCRUD, requester_id: Union[int, None] = None) -> User:
+async def _create_user(payload: UserCreate, users: UserCRUD) -> User:
     # Check for unicity
     if (await users.get_by_login(payload.login, strict=False)) is not None:
         raise HTTPException(status.HTTP_409_CONFLICT, "Login already taken")
 
     # Create the entry
-    user = await users.create(
+    return await users.create(
         User(
             login=payload.login,
-            id=payload._id,
+            source_id=payload.source_id,
             hashed_password=hash_password(payload.password),
             role=payload.role,
         )
     )
-    return user
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Register a new user")

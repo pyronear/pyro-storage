@@ -17,7 +17,7 @@ from app.core.config import settings
 from app.core.security import create_access_token
 from app.db import engine
 from app.main import app
-from app.models import Detection, Source, User
+from app.models import Annotation, Detection, Source, User
 from app.services.storage import s3_service
 
 dt_format = "%Y-%m-%dT%H:%M:%S.%f"
@@ -25,7 +25,7 @@ dt_format = "%Y-%m-%dT%H:%M:%S.%f"
 USER_TABLE = [
     {
         "id": 1,
-        "_id": 1,
+        "source_id": 2,
         "role": "admin",
         "login": "first_login",
         "hashed_password": "hashed_first_pwd",
@@ -33,7 +33,7 @@ USER_TABLE = [
     },
     {
         "id": 2,
-        "_id": 1,
+        "source_id": 2,
         "role": "agent",
         "login": "second_login",
         "hashed_password": "hashed_second_pwd",
@@ -41,7 +41,7 @@ USER_TABLE = [
     },
     {
         "id": 3,
-        "_id": 2,
+        "source_id": 3,
         "role": "user",
         "login": "third_login",
         "hashed_password": "hashed_third_pwd",
@@ -49,10 +49,12 @@ USER_TABLE = [
     },
 ]
 
-CAM_TABLE = [
+SOURCE_TABLE = [
     {
-        "id": 1,
-        "_id": 1,
+        "id": 2,
+        "camera_id": 1,
+        "origin": "pyronearfrenchapi",
+        "origin_url": None,
         "name": "cam-1",
         "angle_of_view": 91.3,
         "elevation": 110.6,
@@ -64,8 +66,10 @@ CAM_TABLE = [
         "created_at": datetime.strptime("2023-11-07T15:07:19.226673", dt_format),
     },
     {
-        "id": 2,
-        "_id": 2,
+        "id": 3,
+        "camera_id": None,
+        "origin": "alertwildfire",
+        "origin_url": None,
         "name": "cam-2",
         "angle_of_view": 91.3,
         "elevation": 110.6,
@@ -78,47 +82,56 @@ CAM_TABLE = [
     },
 ]
 
+
+ANNOTATION_TABLE = [
+    {
+        "id": 1,
+        "gif_url": "url_gif_annotation_1",
+        "label": "wildfire",
+    },
+    {
+        "id": 2,
+        "gif_url": "url_gif_annotation_2",
+        "label": None,
+    },
+]
+
 DET_TABLE = [
     {
         "id": 1,
-        "camera_id": 1,
+        "source_id": 2,
+        "annotation_id": 1,
         "azimuth": 43.7,
         "bucket_key": "my_file",
-        "is_wildfire": True,
         "bboxes": "[(.1,.1,.7,.8,.9)]",
+        "bbox_verified": None,
+        "prediction": None,
         "created_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
         "updated_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
     },
     {
         "id": 2,
-        "camera_id": 1,
+        "source_id": 2,
+        "annotation_id": 1,
         "azimuth": 43.7,
         "bucket_key": "my_file",
-        "is_wildfire": False,
         "bboxes": "[(.1,.1,.7,.8,.9)]",
+        "bbox_verified": None,
+        "prediction": None,
         "created_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
         "updated_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
     },
     {
         "id": 3,
-        "camera_id": 2,
+        "source_id": 3,
+        "annotation_id": 2,
         "azimuth": 43.7,
         "bucket_key": "my_file",
-        "is_wildfire": None,
         "bboxes": "[(.1,.1,.7,.8,.9)]",
+        "bbox_verified": None,
+        "prediction": None,
         "created_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
         "updated_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
-    },
-]
-
-WEBHOOK_TABLE = [
-    {
-        "id": 1,
-        "url": f"http://localhost:8050{settings.API_V1_STR}",
-    },
-    {
-        "id": 2,
-        "url": "http://localhost:9999",
     },
 ]
 
@@ -171,35 +184,52 @@ def mock_img():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def user_session(_session: AsyncSession, monkeypatch):
+async def user_session(source_session: AsyncSession, monkeypatch):
     monkeypatch.setattr(users, "hash_password", mock_hash_password)
     monkeypatch.setattr(login, "verify_password", mock_verify_password)
     for entry in USER_TABLE:
-        _session.add(User(**entry))
-    await _session.commit()
-    await _session.exec(
+        source_session.add(User(**entry))
+    await source_session.commit()
+    await source_session.exec(
         text(f"ALTER SEQUENCE {User.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in USER_TABLE) + 1}")
     )
-    await _session.commit()
-    yield _session
-    await _session.rollback()
+    await source_session.commit()
+    yield source_session
+    await source_session.rollback()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def source_session(user_session: AsyncSession, _session: AsyncSession):
-    for entry in CAM_TABLE:
-        user_session.add(Source(**entry))
-    await user_session.commit()
-    await user_session.exec(
-        text(f"ALTER SEQUENCE {Source.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in CAM_TABLE) + 1}")
+async def source_session(async_session: AsyncSession):
+    for entry in SOURCE_TABLE:
+        async_session.add(Source(**entry))
+    await async_session.commit()
+    await async_session.exec(
+        text(
+            f"ALTER SEQUENCE {Source.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in SOURCE_TABLE) + 1}"
+        )
     )
-    await user_session.commit()
-    yield user_session
-    await user_session.rollback()
+    await async_session.commit()
+    yield async_session
+    await async_session.rollback()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def detection_session(user_session: AsyncSession, camera_session: AsyncSession, _session: AsyncSession):
+async def annotation_session(source_session: AsyncSession):
+    for entry in ANNOTATION_TABLE:
+        source_session.add(Annotation(**entry))
+    await source_session.commit()
+    await source_session.exec(
+        text(
+            f"ALTER SEQUENCE {User.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in ANNOTATION_TABLE) + 1}"
+        )
+    )
+    await source_session.commit()
+    yield source_session
+    await source_session.rollback()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def detection_session(source_session: AsyncSession, user_session: AsyncSession, annotation_session: AsyncSession):
     for entry in DET_TABLE:
         user_session.add(Detection(**entry))
     await user_session.commit()
@@ -212,21 +242,21 @@ async def detection_session(user_session: AsyncSession, camera_session: AsyncSes
     await user_session.commit()
     # Create bucket files
     for entry in DET_TABLE:
-        bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(entry["camera_id"]))
+        bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(entry["source_id"]))
         bucket.upload_file(entry["bucket_key"], io.BytesIO(b""))
     yield user_session
     await user_session.rollback()
     # Delete bucket files
     try:
         for entry in DET_TABLE:
-            bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(entry["camera_id"]))
+            bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(entry["source_id"]))
             bucket.delete_file(entry["bucket_key"])
     except ClientError:
         pass
 
 
-def get_token(access_id: int, scopes: str, _id: int) -> Dict[str, str]:
-    token_data = {"sub": str(access_id), "scopes": scopes, "_id": _id}
+def get_token(access_id: int, scopes: str, source_id: int) -> Dict[str, str]:
+    token_data = {"sub": str(access_id), "scopes": scopes, "source_id": source_id}
     token = create_access_token(token_data)
     return {"Authorization": f"Bearer {token}"}
 
@@ -235,17 +265,13 @@ def pytest_configure():
     # api.security patching
     pytest.get_token = get_token
     # Table
-    pytest._table = [
-        {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in ORGANIZATION_TABLE
-    ]
     pytest.user_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
         for entry in USER_TABLE
     ]
     pytest.source_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in CAM_TABLE
+        for entry in SOURCE_TABLE
     ]
     pytest.detection_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
@@ -253,5 +279,5 @@ def pytest_configure():
     ]
     pytest.annotation_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in DET_TABLE
+        for entry in ANNOTATION_TABLE
     ]

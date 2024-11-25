@@ -8,14 +8,13 @@ from typing import Dict, Type, TypeVar, Union, cast
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, SecurityScopes
-from httpx import AsyncClient, HTTPStatusError
 from jwt import DecodeError, ExpiredSignatureError, InvalidSignatureError
 from jwt import decode as jwt_decode
-from pydantic import BaseModel, ValidationError
+from pydantic import ValidationError
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.core.config import settings
-from app.crud import DetectionCRUD, SourceCRUD, UserCRUD
+from app.crud import AnnotationCRUD, DetectionCRUD, SourceCRUD, UserCRUD
 from app.db import get_session
 from app.models import User, UserRole
 from app.schemas.login import TokenPayload
@@ -46,6 +45,10 @@ def get_source_crud(session: AsyncSession = Depends(get_session)) -> SourceCRUD:
 
 def get_detection_crud(session: AsyncSession = Depends(get_session)) -> DetectionCRUD:
     return DetectionCRUD(session=session)
+
+
+def get_annotation_crud(session: AsyncSession = Depends(get_session)) -> AnnotationCRUD:
+    return AnnotationCRUD(session=session)
 
 
 def decode_token(token: str, authenticate_value: Union[str, None] = None) -> Dict[str, str]:

@@ -28,10 +28,10 @@ class SourceCreate(BaseModel):
         ...,
         min_length=3,
         max_length=50,
-        description="name of the camera",
-        json_schema_extra={"examples": ["pyro-camera-01"]},
+        description="name of the source",
+        json_schema_extra={"examples": ["pyro-source-01"]},
     )
-    camera_id: int = Field(None, gt=0)
+    source_id: int = Field(None, gt=0)
     origin: Origin = Field(None)
     origin_url: str = Field(None)
 
@@ -39,7 +39,7 @@ class SourceCreate(BaseModel):
         ...,
         gt=0,
         le=360,
-        description="angle between left and right camera view",
+        description="angle between left and right source view",
         json_schema_extra={"examples": [120.0]},
     )
     elevation: float = Field(
@@ -51,4 +51,4 @@ class SourceCreate(BaseModel):
     )
     lat: float = Field(..., gt=-90, lt=90, description="latitude", json_schema_extra={"examples": [44.765181]})
     lon: float = Field(..., gt=-180, lt=180, description="longitude", json_schema_extra={"examples": [4.514880]})
-    is_trustable: bool = Field(True, description="whether the detection from this camera can be trusted")
+    is_trustable: bool = Field(True, description="whether the detection from this source can be trusted")

@@ -6,7 +6,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 
 @pytest.mark.parametrize(
-    ("user_idx", "cam_idx", "payload", "status_code", "status_detail"),
+    ("user_idx", "source_idx", "payload", "status_code", "status_detail"),
     [
         (None, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 401, "Not authenticated"),
         (0, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
@@ -17,7 +17,19 @@ from sqlmodel.ext.asyncio.session import AsyncSession
         (None, 0, {"azimuth": 45.6, "bboxes": []}, 422, None),
         (None, 1, {"azimuth": 45.6, "bboxes": (0.6, 0.6, 0.6, 0.6, 0.6)}, 422, None),
         (None, 1, {"azimuth": 45.6, "bboxes": "[(0.6, 0.6, 0.6, 0.6, 0.6)]"}, 422, None),
-        (None, 1, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 201, None),
+        (
+            None,
+            1,
+            {
+                "azimuth": 45.6,
+                "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]",
+                "annotation_id": None,
+                "bbox_verified": None,
+                "prediction": None,
+            },
+            201,
+            None,
+        ),
     ],
 )
 @pytest.mark.asyncio
@@ -26,7 +38,7 @@ async def test_create_detection(
     detection_session: AsyncSession,
     mock_img: bytes,
     user_idx: Union[int, None],
-    cam_idx: Union[int, None],
+    source_idx: Union[int, None],
     payload: Dict[str, Any],
     status_code: int,
     status_detail: Union[str, None],
@@ -36,13 +48,13 @@ async def test_create_detection(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
-    elif isinstance(cam_idx, int):
+    elif isinstance(source_idx, int):
         auth = pytest.get_token(
-            pytest.camera_table[cam_idx]["id"],
-            ["camera"],
-            pytest.camera_table[cam_idx]["_id"],
+            pytest.source_table[source_idx]["id"],
+            ["source"],
+            pytest.source_table[source_idx]["id"],
         )
 
     response = await async_client.post(
@@ -55,11 +67,10 @@ async def test_create_detection(
         assert {
             k: v
             for k, v in response.json().items()
-            if k not in {"created_at", "updated_at", "id", "is_wildfire", "bucket_key", "camera_id"}
+            if k not in {"created_at", "updated_at", "id", "bucket_key", "source_id"}
         } == payload
         assert response.json()["id"] == max(entry["id"] for entry in pytest.detection_table) + 1
-        assert response.json()["camera_id"] == pytest.camera_table[cam_idx]["id"]
-        assert response.json()["is_wildfire"] is None
+        assert response.json()["source_id"] == pytest.source_table[source_idx]["id"]
 
 
 @pytest.mark.parametrize(
@@ -89,7 +100,7 @@ async def test_get_detection(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.get(f"/detections/{detection_id}", headers=auth)
@@ -122,7 +133,7 @@ async def test_fetch_detections(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.get("/detections", headers=auth)
@@ -141,7 +152,6 @@ async def test_fetch_detections(
         (0, "old-date", 422, None, None),
         (0, "2018-19-20T00:00:00", 422, None, None),  # impossible date
         (0, "2018-06-06", 422, None, None),  # datetime != date
-        (0, "2018-06-06T00:00:00", 200, None, [pytest.detection_table[2]]),
         (1, "2018-06-06T00:00:00", 200, None, []),
         (2, "2018-06-06T00:00:00", 200, None, [pytest.detection_table[2]]),
     ],
@@ -161,7 +171,7 @@ async def test_fetch_unlabeled_detections(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.get(f"/detections/unlabeled/fromdate?from_date={from_date}", headers=auth)
@@ -177,16 +187,14 @@ async def test_fetch_unlabeled_detections(
 @pytest.mark.parametrize(
     ("user_idx", "detection_id", "payload", "status_code", "status_detail", "expected_idx"),
     [
-        (None, 1, {"is_wildfire": True}, 401, "Not authenticated", None),
-        (0, 0, {"is_wildfire": True}, 422, None, None),
-        (0, 1, {"label": True}, 422, None, None),
-        (0, 1, {"is_wildfire": "hello"}, 422, None, None),
-        # (0, 1, {"is_wildfire": "True"}, 422, None, None),  # odd, this works
-        (0, 1, {"is_wildfire": True}, 200, None, 0),
-        (0, 2, {"is_wildfire": True}, 200, None, 1),
-        (1, 1, {"is_wildfire": True}, 200, None, 0),
-        (1, 2, {"is_wildfire": True}, 200, None, 1),
-        (2, 1, {"is_wildfire": True}, 403, None, 0),
+        (None, 1, {"label": "wildfire"}, 401, "Not authenticated", None),
+        (0, 0, {"label": "wildfire"}, 422, None, None),
+        (0, 1, {"label": "hello"}, 422, None, None),
+        (0, 1, {"label": "wildfire"}, 200, None, 0),
+        (2, 3, {"label": "wildfire"}, 200, None, 1),
+        (1, 1, {"label": "wildfire"}, 200, None, 0),
+        (2, 3, {"label": "nothing"}, 200, None, 1),
+        (2, 1, {"label": "wildfire"}, 403, None, 0),
     ],
 )
 @pytest.mark.asyncio
@@ -205,7 +213,7 @@ async def test_label_detection(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.patch(f"/detections/{detection_id}/label", json=payload, headers=auth)
@@ -214,7 +222,7 @@ async def test_label_detection(
         assert response.json()["detail"] == status_detail
     if response.status_code // 100 == 2:
         assert response.json() == {
-            **{k: v for k, v in pytest.detection_table[expected_idx].items() if k != "is_wildfire"},
+            **{k: v for k, v in pytest.annotation_table[expected_idx].items() if k != "label"},
             **payload,
         }
 
@@ -244,7 +252,7 @@ async def test_get_detection_url(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.get(f"/detections/{detection_id}/url", headers=auth)
@@ -282,7 +290,7 @@ async def test_delete_detection(
         auth = pytest.get_token(
             pytest.user_table[user_idx]["id"],
             pytest.user_table[user_idx]["role"].split(),
-            pytest.user_table[user_idx]["_id"],
+            pytest.user_table[user_idx]["source_id"],
         )
 
     response = await async_client.delete(f"/detections/{detection_id}", headers=auth)

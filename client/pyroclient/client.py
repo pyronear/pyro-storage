@@ -99,7 +99,7 @@ class Client:
     def headers(self) -> Dict[str, str]:
         return {"Authorization": f"Bearer {self.token}"}
 
-    # CAMERAS
+    # SOURCES
     def fetch_sources(self) -> Response:
         """List the sources accessible to the authenticated user
 
@@ -181,16 +181,16 @@ class Client:
             files={"file": ("logo.png", media, "image/png")},
         )
 
-    def label_detection(self, detection_id: int, is_wildfire: bool) -> Response:
+    def label_detection(self, detection_id: int, label: str) -> Response:
         """Update the label of a detection made by a camera
 
         >>> from pyroclient import client
         >>> api_client = Client("MY_USER_TOKEN")
-        >>> response = api_client.label_detection(1, is_wildfire=True)
+        >>> response = api_client.label_detection(1, label="wildfire")
 
         Args:
             detection_id: ID of the associated detection entry
-            is_wildfire: whether this detection is confirmed as a wildfire
+            label: whether this detection is confirmed as a wildfire
 
         Returns:
             HTTP response
@@ -198,7 +198,7 @@ class Client:
         return requests.patch(
             self.routes["detections-label"].format(det_id=detection_id),
             headers=self.headers,
-            json={"is_wildfire": is_wildfire},
+            json={"label": label},
             timeout=self.timeout,
         )
 

@@ -14,7 +14,7 @@ Table "Detection" as D{
   "annotation_id" int [ref: > A.id]
   "azimuth" int
   "img_url" string [not null]
-  "model_prediction" string [null]
+  "prediction" string [null]
   "bbox" string [null]
   "bbox_verified" bool [null]
   Indexes {

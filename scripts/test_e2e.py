@@ -101,7 +101,7 @@ def main(args):
     api_request("get", f"{args.endpoint}/detections/unlabeled/fromdate?from_date=2018-06-06T00:00:00", agent_auth)
 
     # Acknowledge it
-    api_request("patch", f"{args.endpoint}/detections/{detection_id}/label", agent_auth, {"is_wildfire": True})
+    api_request("patch", f"{args.endpoint}/detections/{detection_id}/label", agent_auth, {"label": "wildfire"})
 
     # Fetch detections & their URLs
     api_request("get", f"{args.endpoint}/detections", agent_auth)

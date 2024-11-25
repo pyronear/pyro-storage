@@ -32,7 +32,7 @@ async def login_with_creds(
     if user is None or user.hashed_password is None or not verify_password(form_data.password, user.hashed_password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials.")
     # create access token using user user_id/user_scopes
-    token_data = {"sub": str(user.id), "scopes": user.role.split(), "_id": user._id}
+    token_data = {"sub": str(user.id), "scopes": user.role.split(), "source_id": user.source_id}
     token = create_access_token(token_data, settings.JWT_UNLIMITED)
 
     return Token(access_token=token, token_type="bearer")  # noqa S106
@@ -40,6 +40,6 @@ async def login_with_creds(
 
 @router.get("/validate", status_code=status.HTTP_200_OK, summary="Check token validity")
 def check_token_validity(
-    payload: TokenPayload = Security(get_jwt, scopes=[Role.USER, Role.CAMERA, Role.AGENT, Role.ADMIN]),
+    payload: TokenPayload = Security(get_jwt, scopes=[Role.USER, Role.SOURCE, Role.AGENT, Role.ADMIN]),
 ) -> TokenPayload:
     return payload

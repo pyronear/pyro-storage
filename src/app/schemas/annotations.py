@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.models import Label
 
-__all__ = ["AnnotationCreate"]
+__all__ = ["AnnotationCreate", "AnnotationLabel"]
 
 
 class AnnotationCreate(BaseModel):
@@ -16,11 +16,10 @@ class AnnotationCreate(BaseModel):
     gif_url: str
     label: Label
 
-class AnnotationIn(BaseModel):
+
+class AnnotationLabel(BaseModel):
     label: Label
 
-class AnnotationOut(AnnotationIn):
-    pass
 
 class AnnotationUrl(BaseModel):
     gif_url: str

@@ -23,7 +23,7 @@ class UserRole(str, Enum):
 class Role(str, Enum):
     ADMIN: str = "admin"
     AGENT: str = "agent"
-    CAMERA: str = "camera"
+    SOURCE: str = "source"
     USER: str = "user"
 
 
@@ -41,7 +41,7 @@ class Origin(str, Enum):
 class User(SQLModel, table=True):
     __tablename__ = "users"
     id: int = Field(None, primary_key=True)
-    source_id: int = Field(..., foreign_key="sources.id", nullable=True)
+    source_id: int = Field(..., foreign_key="sources.id", nullable=False)
     role: UserRole = Field(UserRole.USER, nullable=False)
     # Allow sign-up/in via login + password
     login: str = Field(..., index=True, unique=True, min_length=2, max_length=50, nullable=False)
@@ -53,13 +53,13 @@ class Source(SQLModel, table=True):
     __tablename__ = "sources"
     id: int = Field(None, primary_key=True)
     name: str = Field(..., min_length=5, max_length=100, nullable=False, unique=True)
-    camera_id: int = None
-    origin: Origin = None
-    origin_url: str = None
-    angle_of_view: float = Field(..., gt=0, le=360, nullable=False)
-    elevation: float = Field(..., gt=0, lt=10000, nullable=False)
-    lat: float = Field(..., gt=-90, lt=90)
-    lon: float = Field(..., gt=-180, lt=180)
+    camera_id: int = Field(default=None, nullable=True)
+    origin: Origin = Field(default=None, nullable=True)
+    origin_url: str = Field(default=None, nullable=True)
+    angle_of_view: float = Field(..., gt=0, le=360, nullable=True)
+    elevation: float = Field(..., gt=0, lt=10000, nullable=True)
+    lat: float = Field(..., gt=-90, lt=90, nullable=True)
+    lon: float = Field(..., gt=-180, lt=180, nullable=True)
     is_trustable: bool = True
     last_active_at: Union[datetime, None] = None
     last_image: Union[str, None] = None
@@ -70,12 +70,12 @@ class Detection(SQLModel, table=True):
     __tablename__ = "detections"
     id: int = Field(None, primary_key=True)
     source_id: int = Field(..., foreign_key="sources.id", nullable=False)
-    annotation_id: int = Field(None, foreign_key="annotations.id")
+    annotation_id: int = Field(None, foreign_key="annotations.id", nullable=True)
     azimuth: float = Field(..., gt=0, lt=360)
     bucket_key: str
     bboxes: str = Field(..., min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=False)
-    bbox_verified: bool = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH)
-    model_prediction: str = None
+    bbox_verified: bool = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
+    prediction: str = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
@@ -84,4 +84,4 @@ class Annotation(SQLModel, table=True):
     __tablename__ = "annotations"
     id: int = Field(None, primary_key=True)
     gif_url: str = Field(nullable=False)
-    label: Label = Field(None)
+    label: Label = Field(nullable=True)
