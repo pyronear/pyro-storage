@@ -24,10 +24,8 @@ router = APIRouter()
 async def register_source(
     payload: SourceCreate,
     sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> Source:
-    if UserRole.ADMIN not in token_payload.scopes:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
 
     source = await sources.create(payload)
     bucket_name = s3_service.resolve_bucket_name(source.id)

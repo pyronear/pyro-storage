@@ -54,7 +54,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
                 "lon": 7.8,
             },
             403,
-            "Access forbidden.",
+            "Incompatible token scope.",
         ),
         (
             2,
