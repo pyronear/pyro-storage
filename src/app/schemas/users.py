@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from app.models import UserRole
 
-__all__ = ["Cred", "CredHash", "UserCreate", "UserCreation"]
+__all__ = ["Cred", "CredHash", "UserCreate"]
 
 
 # Accesses
@@ -31,9 +31,3 @@ class UserCreate(Role):
     login: str = Field(..., min_length=3, max_length=50, examples=["JohnDoe"])
     password: str = Field(..., min_length=3, examples=["PickARobustOne"])
     source_id: int = Field(..., gt=0)
-    id: int = Field(..., gt=0)
-
-
-class UserCreation(Role):
-    login: str = Field(..., min_length=3, max_length=50, examples=["JohnDoe"])
-    id: int = Field(..., gt=0)
