@@ -144,7 +144,7 @@ async def fetch_unlabeled_detections(
             select(Detection, Source.id)  # type: ignore[attr-defined]
             .join(Source, Detection.source_id == Source.id)  # type: ignore[arg-type]
             .join(Annotation, Detection.annotation_id == Annotation.id)  # type: ignore[arg-type]
-            .where(Annotation.label.not_in([Label.WILDFIRE, Label.NOTHING]))
+            .where(Annotation.label.not_in([Label.WILDFIRE, Label.NOTHING]))  # type: ignore[attr-defined]
             .where(Detection.created_at >= from_date)
             .limit(limit)
             .offset(offset)
@@ -161,8 +161,8 @@ async def fetch_unlabeled_detections(
             .join(Annotation, Detection.annotation_id == Annotation.id)  # type: ignore[arg-type]
             .where(
                 or_(
-                    Annotation.label.not_in([Label.WILDFIRE, Label.NOTHING]),  # Exclude WILDFIRE and NOTHING
-                    Annotation.label.is_(None),  # Include rows where label is NULL
+                    Annotation.label.not_in([Label.WILDFIRE, Label.NOTHING]),  # type: ignore[attr-defined]
+                    Annotation.label.is_(None),  # type: ignore[attr-defined]
                 )
             )
             .where(Detection.created_at >= from_date)

@@ -35,7 +35,7 @@ async def init_db() -> None:
         logger.info("Initializing PostgreSQL database...")
 
         # Check if admin exists
-        statement = select(User).where(User.login == settings.SUPERADMIN_LOGIN)
+        statement = select(User).where(User.login == settings.SUPERADMIN_LOGIN)  # type: ignore[var-annotated]
         results = await session.exec(statement=statement)
         user = results.one_or_none()
         if not user:

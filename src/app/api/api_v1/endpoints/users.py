@@ -37,9 +37,9 @@ async def _create_user(payload: UserCreate, users: UserCRUD) -> User:
 async def create_user(
     payload: UserCreate,
     users: UserCRUD = Depends(get_user_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> User:
-    return await _create_user(payload, users, token_payload.sub)
+    return await _create_user(payload, users)
 
 
 @router.get("/{user_id}", status_code=status.HTTP_200_OK, summary="Fetch the information of a specific user")

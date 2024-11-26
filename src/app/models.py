@@ -74,8 +74,8 @@ class Detection(SQLModel, table=True):
     azimuth: float = Field(..., gt=0, lt=360)
     bucket_key: str
     bboxes: str = Field(..., min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=False)
-    bbox_verified: bool = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
-    prediction: str = Field(default=None, nullable=True)
+    bbox_verified: str = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
+    prediction: float = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 

@@ -4,6 +4,7 @@
 # See LICENSE or go to <https://opensource.org/licenses/Apache-2.0> for full license details.
 
 from datetime import datetime
+from typing import Union
 
 from pydantic import BaseModel, Field
 
@@ -31,9 +32,9 @@ class SourceCreate(BaseModel):
         description="name of the source",
         json_schema_extra={"examples": ["pyro-source-01"]},
     )
-    source_id: int = Field(None, gt=0)
-    origin: Origin = Field(None)
-    origin_url: str = Field(None)
+    camera_id: Union[int, None] = Field(default=None, gt=0)
+    origin: Origin
+    origin_url: Union[str, None] = Field(default=None)
 
     angle_of_view: float = Field(
         ...,

@@ -26,7 +26,7 @@ async def register_source(
     sources: SourceCRUD = Depends(get_source_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT]),
 ) -> Source:
-    if token_payload.source_id != payload.id and UserRole.ADMIN not in token_payload.scopes:
+    if UserRole.ADMIN not in token_payload.scopes:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
 
     source = await sources.create(payload)
@@ -75,7 +75,7 @@ async def update_image(
     sources: SourceCRUD = Depends(get_source_crud),
     token_payload: TokenPayload = Security(get_jwt, scopes=[Role.SOURCE]),
 ) -> Source:
-    bucket_key = await upload_file(file, token_payload.source_id, token_payload.sub)
+    bucket_key = await upload_file(file, token_payload.source_id)
     # If the upload succeeds, delete the previous image
     cam = cast(Source, await sources.get(token_payload.sub, strict=True))
     if isinstance(cam.last_image, str):
