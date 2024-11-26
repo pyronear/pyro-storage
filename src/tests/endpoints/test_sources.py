@@ -12,7 +12,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
             None,
             {
                 "name": "pyro-cam",
-                "source_id": 1,
+                "camera_id": 1,
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -31,7 +31,9 @@ from sqlmodel.ext.asyncio.session import AsyncSession
             0,
             {
                 "name": "pyro-cam",
-                "source_id": 1,
+                "camera_id": 1,
+                "origin_url": None,
+                "origin": "pyronearfrenchapi",
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -43,21 +45,22 @@ from sqlmodel.ext.asyncio.session import AsyncSession
         (
             1,
             {
-                "name": "pyro-cam",
-                "source_id": 1,
+                "name": "wildifre-blue-cam",
+                "camera_id": 1,
+                "origin": "alertwildfire",
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
                 "lon": 7.8,
             },
-            201,
-            None,
+            403,
+            "Access forbidden.",
         ),
         (
             2,
             {
                 "name": "pyro-cam",
-                "source_id": 2,
+                "camera_id": 2,
                 "angle_of_view": 90.0,
                 "elevation": 30.0,
                 "lat": 3.5,
@@ -102,9 +105,9 @@ async def test_create_source(
     [
         (None, 1, 401, "Not authenticated", None),
         (0, 0, 422, None, None),
-        (0, 100, 404, "Table Camera has no corresponding entry.", None),
+        (0, 100, 404, "Table Source has no corresponding entry.", None),
         (0, 1, 200, None, 0),
-        (1, 1, 200, None, 0),
+        (1, 1, 403, "Access forbidden.", 0),
         (2, 1, 403, "Access forbidden.", 0),
     ],
 )
@@ -138,9 +141,9 @@ async def test_get_source(
     ("user_idx", "status_code", "status_detail", "expected_response"),
     [
         (None, 401, "Not authenticated", None),
-        (0, 200, None, pytest.source_table[0]),
-        (1, 200, None, pytest.source_table[0]),
-        (2, 200, None, pytest.source_table[1]),
+        (0, 200, None, pytest.source_table),
+        (1, 200, None, [pytest.source_table[1]]),
+        (2, 200, None, [pytest.source_table[2]]),
     ],
 )
 @pytest.mark.asyncio
@@ -165,7 +168,7 @@ async def test_fetch_sources(
     if isinstance(status_detail, str):
         assert response.json()["detail"] == status_detail
     if response.status_code // 100 == 2:
-        assert response.json()[0] == expected_response
+        assert response.json() == expected_response
 
 
 @pytest.mark.parametrize(
@@ -173,7 +176,7 @@ async def test_fetch_sources(
     [
         (None, 1, 401, "Not authenticated"),
         (0, 0, 422, None),
-        (0, 100, 404, "Table Camera has no corresponding entry."),
+        (0, 100, 404, "Table Source has no corresponding entry."),
         (0, 1, 200, None),
         (0, 2, 200, None),
         (1, 1, 403, "Incompatible token scope."),
@@ -212,7 +215,7 @@ async def test_delete_source(
     [
         (None, 1, 401, "Not authenticated"),
         (0, 0, 422, None),
-        (0, 100, 404, "Table Camera has no corresponding entry."),
+        (0, 100, 404, "Table Source has no corresponding entry."),
         (0, 1, 200, None),
         (1, 1, 403, "Incompatible token scope."),
         (2, 1, 403, "Incompatible token scope."),
@@ -280,47 +283,4 @@ async def test_heartbeat(
             assert response.json()["last_active_at"] > pytest.source_table[source_idx]["last_active_at"]
         assert {k: v for k, v in response.json().items() if k != "last_active_at"} == {
             k: v for k, v in pytest.source_table[source_idx].items() if k != "last_active_at"
-        }
-
-
-@pytest.mark.parametrize(
-    ("source_idx", "status_code", "status_detail"),
-    [
-        (None, 401, "Not authenticated"),
-        (0, 200, None),
-        (1, 200, None),
-    ],
-)
-@pytest.mark.asyncio
-async def test_update_image(
-    async_client: AsyncClient,
-    source_session: AsyncSession,
-    mock_img: bytes,
-    source_idx: Union[int, None],
-    status_code: int,
-    status_detail: Union[str, None],
-):
-    auth = None
-    if isinstance(source_idx, int):
-        auth = pytest.get_token(
-            pytest.source_table[source_idx]["id"],
-            ["source"],
-            pytest.source_table[source_idx]["id"],
-        )
-
-    response = await async_client.patch(
-        "/sources/image", files={"file": ("logo.png", mock_img, "image/png")}, headers=auth
-    )
-    assert response.status_code == status_code, print(response.__dict__)
-    if isinstance(status_detail, str):
-        assert response.json()["detail"] == status_detail
-    if response.status_code // 100 == 2:
-        assert isinstance(response.json()["last_active_at"], str)
-        if pytest.source_table[source_idx]["last_active_at"] is not None:
-            assert response.json()["last_active_at"] > pytest.source_table[source_idx]["last_active_at"]
-        assert isinstance(response.json()["last_image"], str)
-        if pytest.source_table[source_idx]["last_image"] is not None:
-            assert response.json()["last_image"] != pytest.source_table[source_idx]["last_image"]
-        assert {k: v for k, v in response.json().items() if k not in {"last_active_at", "last_image"}} == {
-            k: v for k, v in pytest.source_table[source_idx].items() if k not in {"last_active_at", "last_image"}
         }

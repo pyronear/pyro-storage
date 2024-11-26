@@ -6,7 +6,7 @@
 from datetime import datetime
 from typing import List, cast
 
-from fastapi import APIRouter, Depends, File, HTTPException, Path, Security, UploadFile, status
+from fastapi import APIRouter, Depends, HTTPException, Path, Security, status
 
 from app.api.dependencies import get_jwt, get_source_crud
 from app.core.config import settings
@@ -14,8 +14,8 @@ from app.core.security import create_access_token
 from app.crud import SourceCRUD
 from app.models import Role, Source, UserRole
 from app.schemas.login import Token, TokenPayload
-from app.schemas.sources import LastActive, LastImage, SourceCreate
-from app.services.storage import s3_service, upload_file
+from app.schemas.sources import LastActive, SourceCreate
+from app.services.storage import s3_service
 
 router = APIRouter()
 
@@ -45,7 +45,7 @@ async def get_source(
     token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT, UserRole.USER]),
 ) -> Source:
     source = cast(Source, await sources.get(source_id, strict=True))
-    if token_payload.source_id != source.id and UserRole.ADMIN not in token_payload.scopes:
+    if token_payload.source_id != source_id and UserRole.ADMIN not in token_payload.scopes:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
     return source
 
@@ -67,21 +67,6 @@ async def heartbeat(
     token_payload: TokenPayload = Security(get_jwt, scopes=[Role.SOURCE]),
 ) -> Source:
     return await sources.update(token_payload.sub, LastActive(last_active_at=datetime.utcnow()))
-
-
-@router.patch("/image", status_code=status.HTTP_200_OK, summary="Update last image of a source")
-async def update_image(
-    file: UploadFile = File(..., alias="file"),
-    sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.SOURCE]),
-) -> Source:
-    bucket_key = await upload_file(file, token_payload.source_id)
-    # If the upload succeeds, delete the previous image
-    cam = cast(Source, await sources.get(token_payload.sub, strict=True))
-    if isinstance(cam.last_image, str):
-        s3_service.get_bucket(s3_service.resolve_bucket_name(token_payload.source_id)).delete_file(cam.last_image)
-    # Update the DB entry
-    return await sources.update(token_payload.sub, LastImage(last_image=bucket_key, last_active_at=datetime.utcnow()))
 
 
 @router.post("/{source_id}/token", status_code=status.HTTP_200_OK, summary="Request an access token for the source")

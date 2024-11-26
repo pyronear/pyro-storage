@@ -51,6 +51,21 @@ USER_TABLE = [
 
 SOURCE_TABLE = [
     {
+        "id": 1,
+        "camera_id": None,
+        "origin": "pyronearfrenchapi",
+        "origin_url": None,
+        "name": "ADMIN",
+        "angle_of_view": None,
+        "elevation": None,
+        "lat": None,
+        "lon": None,
+        "is_trustable": True,
+        "last_active_at": datetime.strptime("2023-11-07T15:07:19.226673", dt_format),
+        "last_image": None,
+        "created_at": datetime.strptime("2023-11-07T15:07:19.226673", dt_format),
+    },
+    {
         "id": 2,
         "camera_id": 1,
         "origin": "pyronearfrenchapi",
