@@ -88,7 +88,7 @@ async def update_image(
 async def create_source_token(
     source_id: int = Path(..., gt=0),
     sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> Token:
     source = cast(Source, await sources.get(source_id, strict=True))
     # create access token using user user_id/user_scopes
@@ -101,6 +101,6 @@ async def create_source_token(
 async def delete_source(
     source_id: int = Path(..., gt=0),
     sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> None:
     await sources.delete(source_id)

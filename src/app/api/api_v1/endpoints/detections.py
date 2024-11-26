@@ -204,7 +204,7 @@ async def delete_detection(
     detection_id: int = Path(..., gt=0),
     detections: DetectionCRUD = Depends(get_detection_crud),
     sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> None:
     detection = cast(Detection, await detections.get(detection_id, strict=True))
     source = cast(Source, await sources.get(detection.source_id, strict=True))

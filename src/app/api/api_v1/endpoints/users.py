@@ -46,7 +46,7 @@ async def create_user(
 async def get_user(
     user_id: int = Path(..., gt=0),
     users: UserCRUD = Depends(get_user_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> User:
     return cast(User, await users.get(user_id, strict=True))
 
@@ -54,7 +54,7 @@ async def get_user(
 @router.get("/", status_code=status.HTTP_200_OK, summary="Fetch all the users")
 async def fetch_users(
     users: UserCRUD = Depends(get_user_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> List[User]:
     return [elt for elt in await users.fetch_all()]
 
@@ -64,7 +64,7 @@ async def update_user_password(
     payload: Cred,
     user_id: int = Path(..., gt=0),
     users: UserCRUD = Depends(get_user_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> User:
     pwd = hash_password(payload.password)
     return await users.update(user_id, CredHash(hashed_password=pwd))
@@ -74,6 +74,6 @@ async def update_user_password(
 async def delete_user(
     user_id: int = Path(..., gt=0),
     users: UserCRUD = Depends(get_user_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> None:
     await users.delete(user_id)
