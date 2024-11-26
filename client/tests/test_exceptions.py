@@ -1,6 +1,6 @@
 import pytest
 
-from pyroclient.exceptions import HTTPRequestError
+from pyroannotationclient.exceptions import HTTPRequestError
 
 
 @pytest.mark.parametrize(

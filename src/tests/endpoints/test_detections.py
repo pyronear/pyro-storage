@@ -10,7 +10,19 @@ from sqlmodel.ext.asyncio.session import AsyncSession
     [
         (None, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 401, "Not authenticated"),
         (0, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
-        (1, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
+        (
+            1,
+            None,
+            {
+                "azimuth": 45.6,
+                "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]",
+                "annotation_id": None,
+                "bbox_verified": None,
+                "prediction": None,
+            },
+            201,
+            None,
+        ),
         (2, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
         (None, 0, {"azimuth": "hello"}, 422, None),
         (None, 0, {}, 422, None),
@@ -53,7 +65,7 @@ async def test_create_detection(
     elif isinstance(source_idx, int):
         auth = pytest.get_token(
             pytest.source_table[source_idx]["id"],
-            ["source"],
+            ["agent"],
             pytest.source_table[source_idx]["id"],
         )
 
@@ -70,7 +82,8 @@ async def test_create_detection(
             if k not in {"created_at", "updated_at", "id", "bucket_key", "source_id"}
         } == payload
         assert response.json()["id"] == max(entry["id"] for entry in pytest.detection_table) + 1
-        assert response.json()["source_id"] == pytest.source_table[source_idx]["id"]
+        if source_idx is not None:
+            assert response.json()["source_id"] == pytest.source_table[source_idx]["id"]
 
 
 @pytest.mark.parametrize(

@@ -57,7 +57,7 @@ async def create_detection(
     azimuth: float = Form(..., gt=0, lt=360, description="angle between north and direction in degrees"),
     file: UploadFile = File(..., alias="file"),
     detections: DetectionCRUD = Depends(get_detection_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.SOURCE]),
+    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.AGENT]),
 ) -> Detection:
     # Throw an error if the format is invalid and can't be captured by the regex
     if any(box[0] >= box[2] or box[1] >= box[3] for box in COMPILED_BOXES_PATTERN.findall(bboxes)):

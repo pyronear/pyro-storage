@@ -23,7 +23,6 @@ class UserRole(str, Enum):
 class Role(str, Enum):
     ADMIN: str = "admin"
     AGENT: str = "agent"
-    SOURCE: str = "source"
     USER: str = "user"
 
 

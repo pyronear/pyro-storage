@@ -1,10 +1,10 @@
-pyroclient.client
+pyroannotationclient.client
 #################
 
 The client subpackage contains the core definition of the API client.
 
 
-.. currentmodule:: pyroclient.client
+.. currentmodule:: pyroannotationclient.client
 
 
 API Client

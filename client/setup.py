@@ -9,7 +9,7 @@ from pathlib import Path
 
 from setuptools import setup
 
-PKG_NAME = "pyroclient"
+PKG_NAME = "pyroannotationclient"
 VERSION = os.getenv("BUILD_VERSION", "0.2.0.dev0")
 
 
@@ -18,7 +18,7 @@ if __name__ == "__main__":
 
     # Dynamically set the __version__ attribute
     cwd = Path(__file__).parent.absolute()
-    with cwd.joinpath("pyroclient", "version.py").open("w", encoding="utf-8") as f:
+    with cwd.joinpath("pyroannotationclient", "version.py").open("w", encoding="utf-8") as f:
         f.write(f"__version__ = '{VERSION}'\n")
 
     setup(name=PKG_NAME, version=VERSION)

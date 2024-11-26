@@ -269,7 +269,7 @@ async def test_heartbeat(
     if isinstance(source_idx, int):
         auth = pytest.get_token(
             pytest.source_table[source_idx]["id"],
-            ["source"],
+            ["agent"],
             pytest.source_table[source_idx]["id"],
         )
 

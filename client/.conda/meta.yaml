@@ -5,12 +5,12 @@
 # {% set project = pyproject.get('project') %}
 # {% set urls = pyproject.get('project', {}).get('urls') %}
 package:
-  name: pyroclient
+  name: pyroannotationclient
   version: "{{ environ.get('BUILD_VERSION', '0.2.0.dev0') }}"
 
 source:
-  fn: pyroclient-{{ environ.get('BUILD_VERSION', '0.2.0.dev0') }}.tar.gz
-  url: ../dist/pyroclient-{{ environ.get('BUILD_VERSION', '0.2.0.dev0') }}.tar.gz
+  fn: pyroannotationclient-{{ environ.get('BUILD_VERSION', '0.2.0.dev0') }}.tar.gz
+  url: ../dist/pyroannotationclient-{{ environ.get('BUILD_VERSION', '0.2.0.dev0') }}.tar.gz
 
 build:
   noarch: python
@@ -28,8 +28,8 @@ requirements:
 test:
   # Python imports
   imports:
-    - pyroclient
-    - pyroclient.client
+    - pyroannotationclient
+    - pyroannotationclient.client
   requires:
     - python
 

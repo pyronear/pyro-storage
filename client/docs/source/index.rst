@@ -2,7 +2,7 @@
 Pyro-client: alerts for forest wildfires
 ****************************************
 
-The :mod:`pyroclient` package lets you interact with the Pyronear API in a simplified pythonic way.
+The :mod:`pyroannotationclient` package lets you interact with the Pyronear API in a simplified pythonic way.
 
 
 .. toctree::

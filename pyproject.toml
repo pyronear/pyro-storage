@@ -53,7 +53,7 @@ httpx = ">=0.23.0"
 aiosqlite = ">=0.16.0,<1.0.0"
 
 [tool.coverage.run]
-source = ["src/app", "client/pyroclient"]
+source = ["src/app", "client/pyroannotationclient"]
 
 [tool.ruff]
 line-length = 120
@@ -117,7 +117,7 @@ exclude = [".git"]
 docstring-quotes = "double"
 
 [tool.ruff.lint.isort]
-known-first-party = ["app", "tests", "pyroclient"]
+known-first-party = ["app", "tests", "pyroannotationclient"]
 known-third-party = ["fastapi"]
 
 [tool.ruff.lint.per-file-ignores]

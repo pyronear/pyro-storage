@@ -40,6 +40,6 @@ async def login_with_creds(
 
 @router.get("/validate", status_code=status.HTTP_200_OK, summary="Check token validity")
 def check_token_validity(
-    payload: TokenPayload = Security(get_jwt, scopes=[Role.USER, Role.SOURCE, Role.AGENT, Role.ADMIN]),
+    payload: TokenPayload = Security(get_jwt, scopes=[Role.USER, Role.AGENT, Role.ADMIN]),
 ) -> TokenPayload:
     return payload

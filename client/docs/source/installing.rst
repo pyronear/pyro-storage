@@ -12,7 +12,7 @@ Install the last stable release of the package using pip:
 
 .. code:: bash
 
-    pip install pyroclient
+    pip install pyroannotationclient
 
 
 Via Conda
@@ -22,7 +22,7 @@ Install the last stable release of the package using conda:
 
 .. code:: bash
 
-    conda install -c pyronear pyroclient
+    conda install -c pyronear pyroannotationclient
 
 
 Via Git

@@ -20,18 +20,18 @@ from datetime import datetime
 from pathlib import Path
 
 sys.path.insert(0, Path().cwd().parent.parent)
-import pyroclient
+import pyroannotationclient
 
 # -- Project information -----------------------------------------------------
 
 master_doc = "index"
-project = "pyroclient"
+project = "pyroannotationclient"
 copyright = f"2020-{datetime.now().year}, Pyronear"
 author = "Pyronear"
 
 # The full version, including alpha/beta/rc tags
-version = pyroclient.__version__
-release = pyroclient.__version__ + "-git"
+version = pyroannotationclient.__version__
+release = pyroannotationclient.__version__ + "-git"
 
 
 # -- General configuration ---------------------------------------------------

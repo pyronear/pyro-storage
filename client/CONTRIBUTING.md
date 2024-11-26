@@ -8,7 +8,7 @@ Whatever the way you wish to contribute to the project, please respect the [code
 
 ## Codebase structure
 
-- [pyroclient](pyroclient) - The actual codebase of the API client
+- [pyroannotationclient](pyroannotationclient) - The actual codebase of the API client
 - [tests](tests) - Unittests of the client
 - [docs](docs) - Documentation of the Python client
 
@@ -57,7 +57,7 @@ git remote add upstream https://github.com/pyronear/pyro-api.git
 git checkout -b a-short-description
 ```
 
-4 - You only have to set your development environment now. First uninstall any existing installation of the library with `pip uninstall pyroclient`, then:
+4 - You only have to set your development environment now. First uninstall any existing installation of the library with `pip uninstall pyroannotationclient`, then:
 ```shell
 pip install -e "client/.[dev]"
 ```

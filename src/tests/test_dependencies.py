@@ -27,13 +27,6 @@ from app.core.security import create_access_token
             {"sub": 123, "scopes": ["agent"], "source_id": 1},
         ),
         (
-            ["source"],
-            {"sub": "123", "scopes": ["source"], "source_id": 1},
-            None,
-            None,
-            {"sub": 123, "scopes": ["source"], "source_id": 1},
-        ),
-        (
             ["user"],
             {"sub": "123", "scopes": ["user"], "source_id": 1},
             None,
@@ -42,7 +35,6 @@ from app.core.security import create_access_token
         ),
         (["admin"], {"sub": "123", "scopes": ["user"]}, None, 403, None),
         (["admin"], {"sub": "123", "scopes": ["agent"]}, None, 403, None),
-        (["admin"], {"sub": "123", "scopes": ["source"]}, None, 403, None),
     ],
 )
 def test_get_jwt(scopes, token, expires_minutes, error_code, expected_payload):

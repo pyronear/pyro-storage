@@ -12,14 +12,14 @@
   </a>
 </p>
 <p align="center">
-  <a href="https://pypi.org/project/pyroclient/">
-    <img src="https://img.shields.io/pypi/v/pyroclient.svg?logo=python&logoColor=fff&style=flat-square" alt="PyPi Status">
+  <a href="https://pypi.org/project/pyroannotationclient/">
+    <img src="https://img.shields.io/pypi/v/pyroannotationclient.svg?logo=python&logoColor=fff&style=flat-square" alt="PyPi Status">
   </a>
-  <a href="https://anaconda.org/pyronear/pyroclient">
-    <img alt="Anaconda" src="https://img.shields.io/conda/vn/pyronear/pyroclient?style=flat-square?style=flat-square&logo=Anaconda&logoColor=white&label=conda">
+  <a href="https://anaconda.org/pyronear/pyroannotationclient">
+    <img alt="Anaconda" src="https://img.shields.io/conda/vn/pyronear/pyroannotationclient?style=flat-square?style=flat-square&logo=Anaconda&logoColor=white&label=conda">
   </a>
-  <img src="https://img.shields.io/pypi/pyversions/pyroclient.svg?style=flat-square" alt="pyversions">
-  <img src="https://img.shields.io/pypi/l/pyroclient.svg?style=flat-square" alt="license">
+  <img src="https://img.shields.io/pypi/pyversions/pyroannotationclient.svg?style=flat-square" alt="pyversions">
+  <img src="https://img.shields.io/pypi/l/pyroannotationclient.svg?style=flat-square" alt="license">
 </p>
 
 Client for the [Alert management API](https://github.com/pyronear/pyro-api)
@@ -64,16 +64,16 @@ Python 3.8 (or higher) and [pip](https://pip.pypa.io/en/stable/)/[conda](https:/
 
 ### Latest stable release
 
-You can install the last stable release of the package using [pypi](https://pypi.org/project/pyroclient/) as follows:
+You can install the last stable release of the package using [pypi](https://pypi.org/project/pyroannotationclient/) as follows:
 
 ```shell
-pip install pyroclient
+pip install pyroannotationclient
 ```
 
-or using [conda](https://anaconda.org/pyronear/pyroclient):
+or using [conda](https://anaconda.org/pyronear/pyroannotationclient):
 
 ```shell
-conda install -c pyronear pyroclient
+conda install -c pyronear pyroannotationclient
 ```
 
 ### Developer mode

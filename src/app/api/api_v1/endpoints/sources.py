@@ -64,7 +64,7 @@ async def fetch_sources(
 @router.patch("/heartbeat", status_code=status.HTTP_200_OK, summary="Update last ping of a source")
 async def heartbeat(
     sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.SOURCE]),
+    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.AGENT]),
 ) -> Source:
     return await sources.update(token_payload.sub, LastActive(last_active_at=datetime.utcnow()))
 
@@ -77,7 +77,7 @@ async def create_source_token(
 ) -> Token:
     source = cast(Source, await sources.get(source_id, strict=True))
     # create access token using user user_id/user_scopes
-    token_data = {"sub": str(source_id), "scopes": ["source"], "source_id": source.id}
+    token_data = {"sub": str(source_id), "scopes": ["agent"], "source_id": source.id}
     token = create_access_token(token_data, settings.JWT_UNLIMITED)
     return Token(access_token=token, token_type="bearer")  # noqa S106
 
