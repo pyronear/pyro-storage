@@ -23,7 +23,6 @@ def test_client_constructor(token, host, timeout, expected_error):
             Client(token, host, timeout=timeout)
 
 
-@pytest.fixture(scope="session")
 def test_agent_workflow(source_token, mock_img):
     source_client = Client(source_token, "http://localhost:5050", timeout=10)
     response = source_client.heartbeat()
@@ -49,5 +48,4 @@ def test_user_workflow(user_token):
     response = user_client.fetch_detections()
     assert response.status_code == 200, response.__dict__
     response = user_client.fetch_unlabeled_detections("2018-06-06T00:00:00")
-    print(response)
-    assert response.status_code == 200, response.__dict__
+    assert response.status_code == 200

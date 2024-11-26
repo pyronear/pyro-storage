@@ -18,7 +18,7 @@ class Settings(BaseSettings):
     # State
     PROJECT_NAME: str = "Pyronear - Wildfire Alert API"
     PROJECT_DESCRIPTION: str = "API for wildfire prevention, detection and monitoring"
-    VERSION: str = "0.2.0.dev0"
+    VERSION: str = "0.1.0"
     API_V1_STR: str = "/api/v1"
     CORS_ORIGIN: str = "*"
     SUPPORT_EMAIL: Union[str, None] = os.environ.get("SUPPORT_EMAIL")

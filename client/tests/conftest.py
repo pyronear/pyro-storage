@@ -30,7 +30,9 @@ def source_token():
     admin_headers = {"Authorization": f"Bearer {SUPERADMIN_TOKEN}"}
     payload = {
         "name": "pyro-camera-01",
-        "source_id": 1,
+        "origin": "pyronearfrenchapi",
+        "origin_url": "apidev.pyronear.org",
+        "camera_id": 1,
         "angle_of_view": 120,
         "elevation": 1582,
         "lat": 44.765181,
@@ -75,6 +77,7 @@ def user_token():
         "source_id": 1,
     }
     response = requests.post(urljoin(API_URL, "users"), json=payload, headers=admin_headers, timeout=5)
+    print(response)
     assert response.status_code == 201
     # Create a cam token
     return requests.post(
