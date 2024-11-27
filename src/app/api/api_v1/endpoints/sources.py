@@ -26,7 +26,6 @@ async def register_source(
     sources: SourceCRUD = Depends(get_source_crud),
     _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
 ) -> Source:
-
     source = await sources.create(payload)
     bucket_name = s3_service.resolve_bucket_name(source.id)
     if not s3_service.create_bucket(bucket_name):

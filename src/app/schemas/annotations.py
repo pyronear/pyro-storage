@@ -4,7 +4,7 @@
 # See LICENSE or go to <https://opensource.org/licenses/Apache-2.0> for full license details.
 
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.models import Label
 
@@ -12,7 +12,6 @@ __all__ = ["AnnotationCreate", "AnnotationLabel"]
 
 
 class AnnotationCreate(BaseModel):
-    id: int = Field(..., gt=0)
     gif_url: str
     label: Label
 

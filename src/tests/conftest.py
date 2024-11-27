@@ -235,7 +235,7 @@ async def annotation_session(source_session: AsyncSession):
     await source_session.commit()
     await source_session.exec(
         text(
-            f"ALTER SEQUENCE {User.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in ANNOTATION_TABLE) + 1}"
+            f"ALTER SEQUENCE {Annotation.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in ANNOTATION_TABLE) + 1}"
         )
     )
     await source_session.commit()
