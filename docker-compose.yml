@@ -11,8 +11,8 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "sh -c 'pg_isready -U dummy_pg_user -d dummy_pg_db'"]
       interval: 10s
-      timeout: 10s
-      retries: 3
+      timeout: 20s
+      retries: 10
 
   # ref link: https://github.com/localstack/localstack/blob/master/docker-compose.yml
   localstack:
@@ -28,7 +28,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "awslocal --endpoint-url=http://localhost:4566 s3 ls s3://admin"]
       interval: 10s
-      timeout: 10s
+      timeout: 20s
       retries: 10
 
   backend:
@@ -63,5 +63,5 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "curl http://localhost:5050/status"]
       interval: 10s
-      timeout: 10s
-      retries: 3
+      timeout: 20s
+      retries: 10

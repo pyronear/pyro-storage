@@ -8,34 +8,36 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 @pytest.mark.parametrize(
     ("user_idx", "source_idx", "payload", "status_code", "status_detail"),
     [
-        (None, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 401, "Not authenticated"),
-        (0, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
+        (None, None, {"azimuth": 45.6, "bboxes_prediction": "[(0.6,0.6,0.7,0.7,0.6)]"}, 401, "Not authenticated"),
+        (0, None, {"azimuth": 45.6, "bboxes_prediction": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
         (
             1,
             None,
             {
                 "azimuth": 45.6,
-                "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]",
+                "bboxes_prediction": "[(0.6,0.6,0.7,0.7,0.6)]",
                 "annotation_id": None,
+                "bbox_auto": None,
                 "bbox_verified": None,
                 "prediction": None,
             },
             201,
             None,
         ),
-        (2, None, {"azimuth": 45.6, "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
+        (2, None, {"azimuth": 45.6, "bboxes_prediction": "[(0.6,0.6,0.7,0.7,0.6)]"}, 403, "Incompatible token scope."),
         (None, 0, {"azimuth": "hello"}, 422, None),
         (None, 0, {}, 422, None),
-        (None, 0, {"azimuth": 45.6, "bboxes": []}, 422, None),
-        (None, 1, {"azimuth": 45.6, "bboxes": (0.6, 0.6, 0.6, 0.6, 0.6)}, 422, None),
-        (None, 1, {"azimuth": 45.6, "bboxes": "[(0.6, 0.6, 0.6, 0.6, 0.6)]"}, 422, None),
+        (None, 0, {"azimuth": 45.6, "bboxes_prediction": []}, 422, None),
+        (None, 1, {"azimuth": 45.6, "bboxes_prediction": (0.6, 0.6, 0.6, 0.6, 0.6)}, 422, None),
+        (None, 1, {"azimuth": 45.6, "bboxes_prediction": "[(0.6, 0.6, 0.6, 0.6, 0.6)]"}, 422, None),
         (
             None,
             1,
             {
                 "azimuth": 45.6,
-                "bboxes": "[(0.6,0.6,0.7,0.7,0.6)]",
+                "bboxes_prediction": "[(0.6,0.6,0.7,0.7,0.6)]",
                 "annotation_id": None,
+                "bbox_auto": None,
                 "bbox_verified": None,
                 "prediction": None,
             },
@@ -312,3 +314,88 @@ async def test_delete_detection(
         assert response.json()["detail"] == status_detail
     if response.status_code // 100 == 2:
         assert response.json() is None
+
+
+@pytest.mark.parametrize(
+    ("user_idx", "detection_id", "payload", "status_code", "status_detail", "expected_idx"),
+    [
+        (None, 1, {"bbox_auto": "[(.1,.1,.7,.8,.9)]"}, 401, "Not authenticated", None),
+        (0, 0, {"bbox_auto": "[(.1,.1,.7,.8,.9)]"}, 422, None, None),
+        (0, 1, {"bbox_auto": "[(.1,.1,.7,.8,.9)]"}, 200, None, 0),
+        (2, 3, {"bbox_auto": "[(.1,.1,.7,.8,.9)]"}, 403, None, None),
+        (1, 1, {"bbox_auto": "[(.1,.1,.7,.8,.9)]"}, 200, None, 0),
+        (2, 1, {"bbox_auto": "[(.1,.1,.7,.8,.9)]"}, 403, None, None),
+    ],
+)
+@pytest.mark.asyncio
+async def test_update_bbox_detection(
+    async_client: AsyncClient,
+    detection_session: AsyncSession,
+    user_idx: Union[int, None],
+    detection_id: int,
+    payload: Dict[str, Any],
+    status_code: int,
+    status_detail: Union[str, None],
+    expected_idx: Union[int, None],
+):
+    auth = None
+    if isinstance(user_idx, int):
+        auth = pytest.get_token(
+            pytest.user_table[user_idx]["id"],
+            pytest.user_table[user_idx]["role"].split(),
+            pytest.user_table[user_idx]["source_id"],
+        )
+
+    response = await async_client.patch(f"/detections/{detection_id}/update", json=payload, headers=auth)
+
+    assert response.status_code == status_code, print(response.__dict__)
+    if isinstance(status_detail, str):
+        assert response.json()["detail"] == status_detail
+    if response.status_code // 100 == 2:
+        assert response.json() == {
+            **{k: v for k, v in pytest.detection_table[expected_idx].items() if k != "bbox_auto"},
+            **payload,
+        }
+
+
+@pytest.mark.parametrize(
+    ("user_idx", "detection_id", "payload", "status_code", "status_detail", "expected_idx"),
+    [
+        (None, 1, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 401, "Not authenticated", None),
+        (0, 0, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 422, None, None),
+        (0, 1, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 200, None, 0),
+        (1, 3, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 403, None, None),
+        (2, 1, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 403, None, 0),
+        (2, 3, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 200, None, 2),
+        (1, 1, {"bbox_verified": "[(.1,.1,.7,.8,.9)]"}, 403, None, None),
+    ],
+)
+@pytest.mark.asyncio
+async def test_update_bbox_verified(
+    async_client: AsyncClient,
+    detection_session: AsyncSession,
+    user_idx: Union[int, None],
+    detection_id: int,
+    payload: Dict[str, Any],
+    status_code: int,
+    status_detail: Union[str, None],
+    expected_idx: Union[int, None],
+):
+    auth = None
+    if isinstance(user_idx, int):
+        auth = pytest.get_token(
+            pytest.user_table[user_idx]["id"],
+            pytest.user_table[user_idx]["role"].split(),
+            pytest.user_table[user_idx]["source_id"],
+        )
+
+    response = await async_client.patch(f"/detections/{detection_id}/updateverified", json=payload, headers=auth)
+
+    assert response.status_code == status_code, print(response.__dict__)
+    if isinstance(status_detail, str):
+        assert response.json()["detail"] == status_detail
+    if response.status_code // 100 == 2:
+        assert response.json() == {
+            **{k: v for k, v in pytest.detection_table[expected_idx].items() if k != "bbox_verified"},
+            **payload,
+        }

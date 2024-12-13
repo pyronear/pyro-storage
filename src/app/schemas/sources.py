@@ -3,25 +3,19 @@
 # This program is licensed under the Apache License 2.0.
 # See LICENSE or go to <https://opensource.org/licenses/Apache-2.0> for full license details.
 
-from datetime import datetime
 from typing import Union
 
 from pydantic import BaseModel, Field
 
 from app.models import Origin
 
-__all__ = [
-    "LastActive",
-    "SourceCreate",
-]
+__all__ = ["SourceCreate", "UpdateSource"]
 
 
-class LastActive(BaseModel):
-    last_active_at: datetime = Field(default_factory=datetime.utcnow)
-
-
-class LastImage(LastActive):
-    last_image: str
+class UpdateSource(BaseModel):
+    camera_id: Union[int, None] = Field(default=None, gt=0)
+    origin: Origin
+    origin_url: Union[str, None] = Field(default=None)
 
 
 class SourceCreate(BaseModel):
@@ -52,4 +46,3 @@ class SourceCreate(BaseModel):
     )
     lat: float = Field(..., gt=-90, lt=90, description="latitude", json_schema_extra={"examples": [44.765181]})
     lon: float = Field(..., gt=-180, lt=180, description="longitude", json_schema_extra={"examples": [4.514880]})
-    is_trustable: bool = Field(True, description="whether the detection from this source can be trusted")

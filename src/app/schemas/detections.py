@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from app.core.config import settings
 from app.models import Detection
 
-__all__ = ["Azimuth", "DetectionCreate", "DetectionUrl"]
+__all__ = ["Azimuth", "DetectionCreate", "DetectionUpdateBboxAuto", "DetectionUpdateBboxVerified", "DetectionUrl"]
 
 
 # Regex for a float between 0 and 1, with a maximum of 3 decimals
@@ -33,7 +33,7 @@ class Azimuth(BaseModel):
 class DetectionCreate(Azimuth):
     source_id: int = Field(..., gt=0)
     bucket_key: str
-    bboxes: str = Field(
+    bboxes_prediction: str = Field(
         ...,
         min_length=2,
         max_length=settings.MAX_BBOX_STR_LENGTH,
@@ -50,7 +50,17 @@ class DetectionWithUrl(Detection):
     url: str = Field(..., description="temporary URL to access the media content")
 
 
-class UpdateDetection(Detection):
+class DetectionUpdateBboxAuto(BaseModel):
+    bbox_auto: str = Field(
+        ...,
+        min_length=2,
+        max_length=settings.MAX_BBOX_STR_LENGTH,
+        description="string representation of list of tuples where each tuple is a relative coordinate in order xmin, ymin, xmax, ymax",
+        json_schema_extra={"examples": ["[(0.1, 0.1, 0.9, 0.9)]"]},
+    )
+
+
+class DetectionUpdateBboxVerified(BaseModel):
     bbox_verified: str = Field(
         ...,
         min_length=2,
@@ -58,4 +68,3 @@ class UpdateDetection(Detection):
         description="string representation of list of tuples where each tuple is a relative coordinate in order xmin, ymin, xmax, ymax",
         json_schema_extra={"examples": ["[(0.1, 0.1, 0.9, 0.9)]"]},
     )
-    prediction: float

@@ -3,7 +3,6 @@
 # This program is licensed under the Apache License 2.0.
 # See LICENSE or go to <https://www.apache.org/licenses/LICENSE-2.0> for full license details.
 
-from datetime import datetime
 from typing import List, cast
 
 from fastapi import APIRouter, Depends, HTTPException, Path, Security, status
@@ -12,9 +11,9 @@ from app.api.dependencies import get_jwt, get_source_crud
 from app.core.config import settings
 from app.core.security import create_access_token
 from app.crud import SourceCRUD
-from app.models import Role, Source, UserRole
+from app.models import Source, UserRole
 from app.schemas.login import Token, TokenPayload
-from app.schemas.sources import LastActive, SourceCreate
+from app.schemas.sources import SourceCreate
 from app.services.storage import s3_service
 
 router = APIRouter()
@@ -56,14 +55,6 @@ async def fetch_sources(
     if UserRole.ADMIN in token_payload.scopes:
         return all_sources
     return [source for source in all_sources if source.id == token_payload.source_id]
-
-
-@router.patch("/heartbeat", status_code=status.HTTP_200_OK, summary="Update last ping of a source")
-async def heartbeat(
-    sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.AGENT]),
-) -> Source:
-    return await sources.update(token_payload.sub, LastActive(last_active_at=datetime.utcnow()))
 
 
 @router.post("/{source_id}/token", status_code=status.HTTP_200_OK, summary="Request an access token for the source")

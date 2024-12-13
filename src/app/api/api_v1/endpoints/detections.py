@@ -36,6 +36,8 @@ from app.schemas.detections import (
     BOXES_PATTERN,
     COMPILED_BOXES_PATTERN,
     DetectionCreate,
+    DetectionUpdateBboxAuto,
+    DetectionUpdateBboxVerified,
     DetectionUrl,
     DetectionWithUrl,
 )
@@ -47,7 +49,7 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Register a new wildfire detection")
 async def create_detection(
-    bboxes: str = Form(
+    bboxes_prediction: str = Form(
         ...,
         description="string representation of list of detection localizations, each represented as a tuple of relative coords (max 3 decimals) in order: xmin, ymin, xmax, ymax, conf",
         pattern=BOXES_PATTERN,
@@ -60,7 +62,7 @@ async def create_detection(
     token_payload: TokenPayload = Security(get_jwt, scopes=[Role.AGENT]),
 ) -> Detection:
     # Throw an error if the format is invalid and can't be captured by the regex
-    if any(box[0] >= box[2] or box[1] >= box[3] for box in COMPILED_BOXES_PATTERN.findall(bboxes)):
+    if any(box[0] >= box[2] or box[1] >= box[3] for box in COMPILED_BOXES_PATTERN.findall(bboxes_prediction)):
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="xmin & ymin are expected to be respectively smaller than xmax & ymax",
@@ -69,7 +71,9 @@ async def create_detection(
     # Upload media
     bucket_key = await upload_file(file, token_payload.source_id)
     return await detections.create(
-        DetectionCreate(source_id=token_payload.sub, bucket_key=bucket_key, azimuth=azimuth, bboxes=bboxes)
+        DetectionCreate(
+            source_id=token_payload.sub, bucket_key=bucket_key, azimuth=azimuth, bboxes_prediction=bboxes_prediction
+        )
     )
 
 
@@ -211,3 +215,39 @@ async def delete_detection(
     bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(source.id))
     bucket.delete_file(detection.bucket_key)
     await detections.delete(detection_id)
+
+
+@router.patch("/{detection_id}/update", status_code=status.HTTP_200_OK, summary="Label the nature of the detection")
+async def update_detection(
+    payload: DetectionUpdateBboxAuto,
+    detection_id: int = Path(..., gt=0),
+    sources: SourceCRUD = Depends(get_source_crud),
+    detections: DetectionCRUD = Depends(get_detection_crud),
+    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT]),
+) -> Detection:
+    detection = cast(Detection, await detections.get(detection_id, strict=True))
+    if UserRole.ADMIN in token_payload.scopes:
+        return await detections.update(detection_id, payload)
+    source = cast(Source, await sources.get(detection.source_id, strict=True))
+    if token_payload.source_id != source.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
+    return await detections.update(detection_id, payload)
+
+
+@router.patch(
+    "/{detection_id}/updateverified", status_code=status.HTTP_200_OK, summary="Label the nature of the detection"
+)
+async def update_verified(
+    payload: DetectionUpdateBboxVerified,
+    detection_id: int = Path(..., gt=0),
+    sources: SourceCRUD = Depends(get_source_crud),
+    detections: DetectionCRUD = Depends(get_detection_crud),
+    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.USER]),
+) -> Detection:
+    detection = cast(Detection, await detections.get(detection_id, strict=True))
+    if UserRole.ADMIN in token_payload.scopes:
+        return await detections.update(detection_id, payload)  # type: ignore[arg-type]
+    source = cast(Source, await sources.get(detection.source_id, strict=True))
+    if token_payload.source_id != source.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
+    return await detections.update(detection_id, payload)  # type: ignore[arg-type]

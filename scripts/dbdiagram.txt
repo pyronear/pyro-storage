@@ -15,7 +15,8 @@ Table "Detection" as D{
   "azimuth" int
   "img_url" string [not null]
   "prediction" string [null]
-  "bbox" string [null]
+  "bbox_detection" string [null]
+  "bbox_auto" bool [null]
   "bbox_verified" bool [null]
   Indexes {
     (id) [pk]
@@ -40,6 +41,11 @@ Table "Sources" as S {
   "camera_id" int [null]
   "origin" origin [not null]
   "origin_url" varchar [null]
+  "angle_of_view" float [null]
+  "elevation" float [null]
+  "lat" float [null]
+  "lon"float [null]
+  "created_at" timestamp [not null] 
 }
 
 Enum "origin" {

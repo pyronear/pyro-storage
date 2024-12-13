@@ -5,7 +5,6 @@
 
 from datetime import datetime
 from enum import Enum
-from typing import Union
 
 from sqlmodel import Field, SQLModel
 
@@ -59,9 +58,6 @@ class Source(SQLModel, table=True):
     elevation: float = Field(..., gt=0, lt=10000, nullable=True)
     lat: float = Field(..., gt=-90, lt=90, nullable=True)
     lon: float = Field(..., gt=-180, lt=180, nullable=True)
-    is_trustable: bool = True
-    last_active_at: Union[datetime, None] = None
-    last_image: Union[str, None] = None
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
 
 
@@ -72,7 +68,8 @@ class Detection(SQLModel, table=True):
     annotation_id: int = Field(None, foreign_key="annotations.id", nullable=True)
     azimuth: float = Field(..., gt=0, lt=360)
     bucket_key: str
-    bboxes: str = Field(..., min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=False)
+    bboxes_prediction: str = Field(..., min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=False)
+    bbox_auto: str = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
     bbox_verified: str = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
     prediction: float = Field(default=None, nullable=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)

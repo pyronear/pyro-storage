@@ -7,11 +7,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.crud.base import BaseCRUD
 from app.models import Source
-from app.schemas.sources import LastActive, SourceCreate
+from app.schemas.sources import SourceCreate, UpdateSource
 
 __all__ = ["SourceCRUD"]
 
 
-class SourceCRUD(BaseCRUD[Source, SourceCreate, LastActive]):
+class SourceCRUD(BaseCRUD[Source, SourceCreate, UpdateSource]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, Source)
