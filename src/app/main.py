@@ -22,23 +22,6 @@ from app.schemas.base import Status
 
 logger = logging.getLogger("uvicorn.error")
 
-# Sentry
-if isinstance(settings.SENTRY_DSN, str):
-    sentry_sdk.init(
-        settings.SENTRY_DSN,
-        enable_tracing=False,
-        traces_sample_rate=0.0,
-        integrations=[
-            StarletteIntegration(transaction_style="url"),
-            FastApiIntegration(transaction_style="url"),
-        ],
-        release=settings.VERSION,
-        server_name=settings.SERVER_NAME,
-        debug=settings.DEBUG,
-        environment=None if settings.DEBUG else "production",
-    )
-    logger.info(f"Sentry middleware enabled on server {settings.SERVER_NAME}")
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -78,9 +61,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-if isinstance(settings.SENTRY_DSN, str):
-    app.add_middleware(SentryAsgiMiddleware)
 
 
 # Overrides swagger to include favicon
