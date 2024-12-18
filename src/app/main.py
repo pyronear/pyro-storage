@@ -98,8 +98,3 @@ def custom_openapi():
 
 
 app.openapi = custom_openapi  # type: ignore[method-assign]
-if settings.PROMETHEUS_ENABLED:
-    Instrumentator(
-        excluded_handlers=["/metrics", "/docs", ".*openapi.json"],
-    ).instrument(app).expose(app, include_in_schema=False)
-    logger.info("Collecting performance data with Prometheus")

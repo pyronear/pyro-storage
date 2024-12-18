@@ -131,10 +131,6 @@ None :)
 
 #### Other optional values
 - `JWT_SECRET`: if set, tokens can be reused between sessions. All instances sharing the same secret key can use the same token.
-- `SENTRY_DSN`: the DSN for your [Sentry](https://sentry.io/) project, which monitors back-end errors and report them back.
-- `SERVER_NAME`: the server tag that will be used to report events to Sentry.
-- `POSTHOG_HOST`: the host for PostHog [PostHog](https://eu.posthog.com/settings/project-details).
-- `POSTHOG_KEY`: the project API key for PostHog [PostHog](https://eu.posthog.com/settings/project-details).
 - `SUPPORT_EMAIL`: the email used for support of your API.
 - `DEBUG`: if set to false, silence debug logs.
 - `S3_ACCESS_KEY`: public key to access to the [S3 storage service](https://docs.aws.amazon.com/powershell/latest/userguide/pstools-appendix-sign-up.html)
@@ -142,7 +138,6 @@ None :)
 - `S3_REGION`: your S3 bucket is geographically identified by its location's region
 - `S3_ENDPOINT_URL`: the URL providing a S3 endpoint by your cloud provider
 - `S3_PROXY_URL`: the url of the proxy to hide the real s3 url behind, do not use proxy if ""
-- `TELEGRAM_TOKEN`: the token of your Telegram bot
 #### Production-only values
 - `ACME_EMAIL`: the email linked to your certificate for HTTPS
 - `BACKEND_HOST`: the subdomain where your users will access your API (e.g "api.mydomain.com")
