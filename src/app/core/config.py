@@ -58,34 +58,8 @@ class Settings(BaseSettings):
     S3_PROXY_URL: str = os.environ.get("S3_PROXY_URL", "")
     S3_URL_EXPIRATION: int = int(os.environ.get("S3_URL_EXPIRATION") or 24 * 3600)
 
-    # Notifications
-    TELEGRAM_TOKEN: Union[str, None] = os.environ.get("TELEGRAM_TOKEN")
-
-    # Error monitoring
-    SENTRY_DSN: Union[str, None] = os.environ.get("SENTRY_DSN")
-    SERVER_NAME: str = os.environ.get("SERVER_NAME", socket.gethostname())
-
-    @field_validator("SENTRY_DSN")
-    @classmethod
-    def sentry_dsn_can_be_blank(cls, v: str) -> Union[str, None]:
-        if not isinstance(v, str) or len(v) == 0:
-            return None
-        return v
-
-    # Product analytics
-    POSTHOG_HOST: str = os.getenv("POSTHOG_HOST", "https://eu.posthog.com")
-    POSTHOG_KEY: Union[str, None] = os.environ.get("POSTHOG_KEY")
-
-    @field_validator("POSTHOG_KEY")
-    @classmethod
-    def posthog_key_can_be_blank(cls, v: str) -> Union[str, None]:
-        if not isinstance(v, str) or len(v) == 0:
-            return None
-        return v
-
     DEBUG: bool = os.environ.get("DEBUG", "").lower() != "false"
     LOGO_URL: str = ""
-    PROMETHEUS_ENABLED: bool = os.getenv("PROMETHEUS_ENABLED", "").lower() == "true"
 
     model_config = SettingsConfigDict(case_sensitive=True)
 

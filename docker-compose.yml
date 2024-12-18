@@ -1,5 +1,43 @@
 name: pyronear
 services:
+  traefik:
+      image: traefik:v2.9.6
+      container_name: traefik
+      ports:
+        # http(s) traffic
+        - "80:80"
+        - "443:443"
+      volumes:
+        - "/var/run/docker.sock:/var/run/docker.sock:ro"
+        - type: bind
+          source: ./acme.json
+          target: /acme.json
+      labels:
+        - "traefik.http.middlewares.strip-www.redirectregex.regex=^https?://(www\\.)(.+)"
+        - "traefik.http.middlewares.strip-www.redirectregex.replacement=https://$${2}"
+        - "traefik.http.middlewares.strip-www.redirectregex.permanent=true"
+      command:
+        # Enable the Traefik log, for configurations and errors
+        - "--log.level=INFO"
+        # Enable Docker in Traefik, so that it reads labels from Docker services
+        - "--providers.docker=true"
+        # Do not expose all Docker services, only the ones explicitly exposed
+        - "--providers.docker.exposedbydefault=false"
+        # HTTPS
+        - "--entryPoints.web.address=:80"
+        - "--entryPoints.websecure.address=:443"
+        # Certificate
+        - "--certificatesresolvers.pyroresolver.acme.tlschallenge=true"
+        - "--certificatesresolvers.pyroresolver.acme.email=contact@pyronear.org"
+        - "--certificatesresolvers.default.acme.storage=/acme.json"
+      restart: always
+      healthcheck:
+        test: "wget --no-verbose --tries=1 --spider  https://annotationdev.pyronear.org/status || exit 1"
+        interval: 20s
+        timeout: 20s
+        retries: 10
+      depends_on:
+        - backend
   db:
     image: postgres:15-alpine
     expose:
@@ -56,6 +94,12 @@ services:
       - S3_SECRET_KEY=fake
       - S3_REGION=us-east-1
       - SERVER_NAME=habile
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.backend.rule=Host(`annotationdev.pyronear.org`)"
+      - "traefik.http.routers.backend.entrypoints=websecure"
+      - "traefik.http.routers.backend.tls.certresolver=pyroresolver"
+      - "traefik.http.services.backend.loadbalancer.server.port=5050"
     volumes:
       - ./src/:/app/
     command: "sh -c 'python app/db.py && uvicorn app.main:app --reload --host 0.0.0.0 --port 5050 --proxy-headers'"

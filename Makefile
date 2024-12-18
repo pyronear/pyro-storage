@@ -16,7 +16,7 @@ lock:
 # Build the docker
 build:
 	poetry export -f requirements.txt --without-hashes --output requirements.txt
-	docker build -f src/Dockerfile . -t pyronear/alert-api:latest
+	docker build -f src/Dockerfile . -t pyronear/annotation-api:latest
 
 # Run the docker
 run:
