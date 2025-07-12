@@ -99,7 +99,6 @@ async def fetch_unlabeled_detections(
 async def delete_detection(
     detection_id: int = Path(..., gt=0),
     detections: DetectionCRUD = Depends(get_detection_crud),
-    session: AsyncSession = Depends(get_session),
 ) -> None:
     detection = await detections.get(detection_id, strict=True)
     bucket = s3_service.get_bucket("default")

@@ -15,7 +15,7 @@ from app.db import get_session
 JWTTemplate = TypeVar("JWTTemplate")
 logger = logging.getLogger("uvicorn.error")
 
-__all__ = ["get_user_crud"]
+__all__ = ["get_detection_annotation_crud", "get_detection_crud", "get_sequence_annotation_crud", "get_sequence_crud"]
 
 
 def get_detection_crud(session: AsyncSession = Depends(get_session)) -> DetectionCRUD:
@@ -30,5 +30,5 @@ def get_sequence_crud(session: AsyncSession = Depends(get_session)) -> SequenceC
     return SequenceCRUD(session=session)
 
 
-def get_detection_annotation_crud(session: AsyncSession = Depends(get_session)) -> SequenceAnnotationCRUD:
+def get_sequence_annotation_crud(session: AsyncSession = Depends(get_session)) -> SequenceAnnotationCRUD:
     return SequenceAnnotationCRUD(session=session)
