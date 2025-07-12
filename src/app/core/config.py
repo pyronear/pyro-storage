@@ -5,7 +5,6 @@
 
 import os
 import secrets
-import socket
 from typing import Union
 
 from pydantic import field_validator

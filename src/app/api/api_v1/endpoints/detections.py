@@ -1,47 +1,30 @@
 # Copyright (C) 2024, Pyronear.
 
-# This program is licensed under the Apache License 2.0.
-# See LICENSE or go to <https://www.apache.org/licenses/LICENSE-2.0> for full license details.
-
 from datetime import datetime
-from typing import List, Optional, cast
+from typing import Dict, List, Optional
 
 from fastapi import (
     APIRouter,
     Depends,
     File,
-    Form,
     HTTPException,
     Path,
     Query,
-    Security,
     UploadFile,
     status,
 )
-from sqlmodel import or_, select
+from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.api.dependencies import (
-    get_annotation_crud,
-    get_detection_crud,
-    get_jwt,
-    get_source_crud,
-)
-from app.core.config import settings
-from app.crud import AnnotationCRUD, DetectionCRUD, SourceCRUD
+from app.api.dependencies import get_detection_crud
+from app.crud import DetectionCRUD
 from app.db import get_session
-from app.models import Annotation, Detection, Label, Role, Source, UserRole
-from app.schemas.annotations import AnnotationLabel
-from app.schemas.detections import (
-    BOXES_PATTERN,
-    COMPILED_BOXES_PATTERN,
+from app.models import Detection
+from app.schemas.detection import (
     DetectionCreate,
-    DetectionUpdateBboxAuto,
-    DetectionUpdateBboxVerified,
     DetectionUrl,
     DetectionWithUrl,
 )
-from app.schemas.login import TokenPayload
 from app.services.storage import s3_service, upload_file
 
 router = APIRouter()
@@ -49,205 +32,76 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Register a new wildfire detection")
 async def create_detection(
-    bboxes_prediction: str = Form(
-        ...,
-        description="string representation of list of detection localizations, each represented as a tuple of relative coords (max 3 decimals) in order: xmin, ymin, xmax, ymax, conf",
-        pattern=BOXES_PATTERN,
-        min_length=2,
-        max_length=settings.MAX_BBOX_STR_LENGTH,
-    ),
-    azimuth: float = Form(..., gt=0, lt=360, description="angle between north and direction in degrees"),
+    model_predictions: Dict,
+    sequence_id: int,
     file: UploadFile = File(..., alias="file"),
     detections: DetectionCRUD = Depends(get_detection_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[Role.AGENT]),
 ) -> Detection:
-    # Throw an error if the format is invalid and can't be captured by the regex
-    if any(box[0] >= box[2] or box[1] >= box[3] for box in COMPILED_BOXES_PATTERN.findall(bboxes_prediction)):
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="xmin & ymin are expected to be respectively smaller than xmax & ymax",
-        )
+    # Upload image to S3
+    bucket_key = await upload_file(file, bucket_id="default")  # You can change 'default' if bucket logic changes
 
-    # Upload media
-    bucket_key = await upload_file(file, token_payload.source_id)
-    return await detections.create(
-        DetectionCreate(
-            source_id=token_payload.sub, bucket_key=bucket_key, azimuth=azimuth, bboxes_prediction=bboxes_prediction
-        )
+    # Create detection in DB
+    payload = DetectionCreate(
+        sequence_id=sequence_id,
+        bucket_key=bucket_key,
+        model_predictions=model_predictions,
     )
+    return await detections.create(payload)
 
 
-@router.get("/{detection_id}", status_code=status.HTTP_200_OK, summary="Fetch the information of a specific detection")
+@router.get("/{detection_id}")
 async def get_detection(
     detection_id: int = Path(..., gt=0),
-    sources: SourceCRUD = Depends(get_source_crud),
     detections: DetectionCRUD = Depends(get_detection_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT, UserRole.USER]),
 ) -> Detection:
-    detection = cast(Detection, await detections.get(detection_id, strict=True))
-
-    if UserRole.ADMIN in token_payload.scopes:
-        return detection
-
-    source = cast(Source, await sources.get(detection.source_id, strict=True))
-    if token_payload.source_id != source.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
-    return detection
+    return await detections.get(detection_id, strict=True)
 
 
-@router.get("/{detection_id}/url", response_model=DetectionUrl, status_code=200)
+@router.get("/{detection_id}/url", response_model=DetectionUrl)
 async def get_detection_url(
     detection_id: int = Path(..., gt=0),
-    sources: SourceCRUD = Depends(get_source_crud),
-    detections: DetectionCRUD = Depends(get_detection_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT, UserRole.USER]),
+    session: AsyncSession = Depends(get_session),
 ) -> DetectionUrl:
-    """Resolve the temporary media image URL"""
-    # Check in DB
-    detection = cast(Detection, await detections.get(detection_id, strict=True))
+    detection = await session.get(Detection, detection_id)
+    if detection is None:
+        raise HTTPException(status_code=404, detail="Detection not found")
 
-    if UserRole.ADMIN in token_payload.scopes:
-        source = cast(Source, await sources.get(detection.source_id, strict=True))
-        bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(source.id))
-        return DetectionUrl(url=bucket.get_public_url(detection.bucket_key))
-
-    source = cast(Source, await sources.get(detection.source_id, strict=True))
-    if token_payload.source_id != source.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
-    # Check in bucket
-    bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(source.id))
+    bucket = s3_service.get_bucket("default")  # Use your bucket naming convention here
     return DetectionUrl(url=bucket.get_public_url(detection.bucket_key))
 
 
-@router.get("/", status_code=status.HTTP_200_OK, summary="Fetch all the detections")
-async def fetch_detections(
+@router.get("/")
+async def list_detections(
     detections: DetectionCRUD = Depends(get_detection_crud),
-    sources: SourceCRUD = Depends(get_source_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT, UserRole.USER]),
 ) -> List[Detection]:
-    if UserRole.ADMIN in token_payload.scopes:
-        return [elt for elt in await detections.fetch_all()]
-
-    sources_list = await sources.fetch_all(filter_pair=("id", token_payload.source_id))
-    source_ids = [source.id for source in sources_list]
-
-    return await detections.fetch_all(in_pair=("source_id", source_ids))
+    return await detections.fetch_all()
 
 
-@router.get("/unlabeled/fromdate", status_code=status.HTTP_200_OK, summary="Fetch all the unlabeled detections")
+@router.get("/unlabeled/fromdate", response_model=List[DetectionWithUrl])
 async def fetch_unlabeled_detections(
-    from_date: datetime = Query(),
-    limit: Optional[int] = Query(15, description="Maximum number of detections to fetch"),
-    offset: Optional[int] = Query(0, description="Number of detections to skip before starting to fetch"),
+    from_date: datetime = Query(...),
+    limit: Optional[int] = Query(15),
+    offset: Optional[int] = Query(0),
     session: AsyncSession = Depends(get_session),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT, UserRole.USER]),
 ) -> List[DetectionWithUrl]:
-    if UserRole.ADMIN in token_payload.scopes:
-        # Custom SQL query to fetch detections along with corresponding _id
-        query = await session.exec(
-            select(Detection, Source.id)  # type: ignore[attr-defined]
-            .join(Source, Detection.source_id == Source.id)  # type: ignore[arg-type]
-            .join(Annotation, Detection.annotation_id == Annotation.id)  # type: ignore[arg-type]
-            .where(Annotation.label.not_in([Label.WILDFIRE, Label.NOTHING]))  # type: ignore[attr-defined]
-            .where(Detection.created_at >= from_date)
-            .limit(limit)
-            .offset(offset)
-        )
-        results = query.all()
-        unlabeled_detections = [Detection(**detection.__dict__) for detection, _ in results]
-        urls = [
-            s3_service.get_bucket(s3_service.resolve_bucket_name(source_id)).get_public_url(det.bucket_key)
-            for det, source_id in results
-        ]
-    else:
-        query = await session.exec(
-            select(Detection)  # type: ignore[attr-defined]
-            .join(Annotation, Detection.annotation_id == Annotation.id)  # type: ignore[arg-type]
-            .where(
-                or_(
-                    Annotation.label.not_in([Label.WILDFIRE, Label.NOTHING]),  # type: ignore[attr-defined]
-                    Annotation.label.is_(None),  # type: ignore[attr-defined]
-                )
-            )
-            .where(Detection.created_at >= from_date)
-            .where(Detection.source_id == token_payload.source_id)
-            .limit(limit)
-            .offset(offset)
-        )
-        results = query.all()
-        unlabeled_detections = [Detection(**detection.__dict__) for detection in results]
-        bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(token_payload.source_id))
-        urls = [bucket.get_public_url(detection.bucket_key) for detection in unlabeled_detections]
-
-    return [DetectionWithUrl(**detection.model_dump(), url=url) for detection, url in zip(unlabeled_detections, urls)]
+    # This example assumes there's an annotation relation to filter "unlabeled"
+    # You may need to adapt based on your annotation schema
+    stmt = select(Detection).where(Detection.created_at >= from_date).limit(limit).offset(offset)
+    results = (await session.exec(stmt)).all()
+    bucket = s3_service.get_bucket("default")
+    return [
+        DetectionWithUrl(**detection.model_dump(), url=bucket.get_public_url(detection.bucket_key))
+        for detection in results
+    ]
 
 
-@router.patch("/{detection_id}/label", status_code=status.HTTP_200_OK, summary="Label the nature of the detection")
-async def label_detection(
-    payload: AnnotationLabel,
-    detection_id: int = Path(..., gt=0),
-    sources: SourceCRUD = Depends(get_source_crud),
-    detections: DetectionCRUD = Depends(get_detection_crud),
-    annotations: AnnotationCRUD = Depends(get_annotation_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT, UserRole.USER]),
-) -> Annotation:
-    detection = cast(Detection, await detections.get(detection_id, strict=True))
-
-    if UserRole.ADMIN in token_payload.scopes:
-        return await annotations.update(detection.annotation_id, payload)
-
-    source = cast(Source, await sources.get(detection.source_id, strict=True))
-    if token_payload.source_id != source.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
-
-    return await annotations.update(detection.annotation_id, payload)
-
-
-@router.delete("/{detection_id}", status_code=status.HTTP_200_OK, summary="Delete a detection")
+@router.delete("/{detection_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_detection(
     detection_id: int = Path(..., gt=0),
     detections: DetectionCRUD = Depends(get_detection_crud),
-    sources: SourceCRUD = Depends(get_source_crud),
-    _token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN]),
+    session: AsyncSession = Depends(get_session),
 ) -> None:
-    detection = cast(Detection, await detections.get(detection_id, strict=True))
-    source = cast(Source, await sources.get(detection.source_id, strict=True))
-    bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(source.id))
+    detection = await detections.get(detection_id, strict=True)
+    bucket = s3_service.get_bucket("default")
     bucket.delete_file(detection.bucket_key)
     await detections.delete(detection_id)
-
-
-@router.patch("/{detection_id}/update", status_code=status.HTTP_200_OK, summary="Label the nature of the detection")
-async def update_detection(
-    payload: DetectionUpdateBboxAuto,
-    detection_id: int = Path(..., gt=0),
-    sources: SourceCRUD = Depends(get_source_crud),
-    detections: DetectionCRUD = Depends(get_detection_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.AGENT]),
-) -> Detection:
-    detection = cast(Detection, await detections.get(detection_id, strict=True))
-    if UserRole.ADMIN in token_payload.scopes:
-        return await detections.update(detection_id, payload)
-    source = cast(Source, await sources.get(detection.source_id, strict=True))
-    if token_payload.source_id != source.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
-    return await detections.update(detection_id, payload)
-
-
-@router.patch(
-    "/{detection_id}/updateverified", status_code=status.HTTP_200_OK, summary="Label the nature of the detection"
-)
-async def update_verified(
-    payload: DetectionUpdateBboxVerified,
-    detection_id: int = Path(..., gt=0),
-    sources: SourceCRUD = Depends(get_source_crud),
-    detections: DetectionCRUD = Depends(get_detection_crud),
-    token_payload: TokenPayload = Security(get_jwt, scopes=[UserRole.ADMIN, UserRole.USER]),
-) -> Detection:
-    detection = cast(Detection, await detections.get(detection_id, strict=True))
-    if UserRole.ADMIN in token_payload.scopes:
-        return await detections.update(detection_id, payload)  # type: ignore[arg-type]
-    source = cast(Source, await sources.get(detection.source_id, strict=True))
-    if token_payload.source_id != source.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access forbidden.")
-    return await detections.update(detection_id, payload)  # type: ignore[arg-type]

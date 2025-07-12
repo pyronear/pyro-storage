@@ -5,79 +5,95 @@
 
 from datetime import datetime
 from enum import Enum
+from typing import Dict, Optional
 
 from sqlmodel import Field, SQLModel
 
-from app.core.config import settings
+__all__ = ["Detection", "DetectionAnnotation", "Sequence", "SequenceAnnotation"]
 
-__all__ = ["Annotation", "Detection", "Source", "User"]
-
-
-class UserRole(str, Enum):
-    ADMIN: str = "admin"
-    AGENT: str = "agent"
-    USER: str = "user"
+# -------------------- ENUMS --------------------
 
 
-class Role(str, Enum):
-    ADMIN: str = "admin"
-    AGENT: str = "agent"
-    USER: str = "user"
+class SequenceStage(str, Enum):
+    IMPORTED = "imported"
+    READY_TO_ANNOTATE = "ready_to_annotate"
+    ANNOTATED = "annotated"
 
 
-class Label(str, Enum):
-    WILDFIRE: str = "wildfire"
-    NOTHING: str = "nothing"
-    UNSURE: str = "unsure"
+class Stage(str, Enum):
+    VISUAL_CHECK = "visual_check"
+    DATASET_READY = "dataset_ready"
+    LABEL_STUDIO_CHECK = "label_studio_check"
 
 
-class Origin(str, Enum):
-    PYRONEARFRENCHAPI: str = "pyronearfrenchapi"
-    ALERTWILDFIRE: str = "alertwildfire"
+# -------------------- TABLES --------------------
 
 
-class User(SQLModel, table=True):
-    __tablename__ = "users"
-    id: int = Field(None, primary_key=True)
-    source_id: int = Field(..., foreign_key="sources.id", nullable=False)
-    role: UserRole = Field(UserRole.USER, nullable=False)
-    # Allow sign-up/in via login + password
-    login: str = Field(..., index=True, unique=True, min_length=2, max_length=50, nullable=False)
-    hashed_password: str = Field(..., min_length=5, max_length=70, nullable=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+class Sequence(SQLModel, table=True):
+    __tablename__ = "sequences"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    source_api: str = Field(nullable=False)
+    alert_api_id: int = Field(nullable=False)
+    created_at: datetime = Field(nullable=False)
+    last_seen_at: datetime = Field(nullable=False)
+    camera_name: str = Field(nullable=False)
+    azimuth: Optional[int] = Field(default=None)
+    is_wildfire_alertapi: bool = Field(nullable=False)
+    organisation: str = Field(nullable=False)
+    model_prediction: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
+    # {
+    #   sequences_bbox: [{
+    #   is_smoke: bool,
+    #   false_positive_types: [lens_flare|high_cloud|lens_droplet|..., ...],
+    #   bboxes: [{detection_id: int, xyxyn: [x1n y1n x2n y2n]}]
+    #   }, ...]
+    # }
 
 
-class Source(SQLModel, table=True):
-    __tablename__ = "sources"
-    id: int = Field(None, primary_key=True)
-    name: str = Field(..., min_length=5, max_length=100, nullable=False, unique=True)
-    camera_id: int = Field(default=None, nullable=True)
-    origin: Origin = Field(default=None, nullable=True)
-    origin_url: str = Field(default=None, nullable=True)
-    angle_of_view: float = Field(..., gt=0, le=360, nullable=True)
-    elevation: float = Field(..., gt=0, lt=10000, nullable=True)
-    lat: float = Field(..., gt=-90, lt=90, nullable=True)
-    lon: float = Field(..., gt=-180, lt=180, nullable=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+class SequenceAnnotation(SQLModel, table=True):
+    __tablename__ = "labels_sequence_annotation"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    sequence_id: int = Field(foreign_key="sequences.id", nullable=False)
+    has_smoke: bool = Field(nullable=False)
+    has_false_positives: bool = Field(nullable=False)
+    has_missed_smoke: bool = Field(nullable=False)
+    sequence_bbox_predictions_annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
+    # {
+    #   sequences_bbox: [{
+    #   is_smoke: bool,
+    #   gif_url_main : str,
+    #   gif_url_crop : str,
+    #   false_positive_types: [lens_flare|high_cloud|lens_droplet|..., ...],
+    #   bboxes: [{detection_id: int, xyxyn: [x1n y1n x2n y2n]}]
+    #   }, ...]
+    # }
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime] = Field(default=None)
+    sequence_stage: SequenceStage = Field(nullable=False)
 
 
 class Detection(SQLModel, table=True):
     __tablename__ = "detections"
-    id: int = Field(None, primary_key=True)
-    source_id: int = Field(..., foreign_key="sources.id", nullable=False)
-    annotation_id: int = Field(None, foreign_key="annotations.id", nullable=True)
-    azimuth: float = Field(..., gt=0, lt=360)
-    bucket_key: str
-    bboxes_prediction: str = Field(..., min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=False)
-    bbox_auto: str = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
-    bbox_verified: str = Field(None, min_length=2, max_length=settings.MAX_BBOX_STR_LENGTH, nullable=True)
-    prediction: float = Field(default=None, nullable=True)
+
+    id: Optional[int] = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    updated_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    sequence_id: Optional[int] = Field(foreign_key="sequences.id", nullable=True)
+    bucket_key: str = Field(nullable=False)
+    model_predictions: Dict = Field(nullable=False, sa_column_kwargs={"type_": "jsonb"})
+    # {predictions: [{xyxyn: [x1n y1n x2n y2n], confidence: float, class_name: 'smoke'}, ...]}
 
 
-class Annotation(SQLModel, table=True):
-    __tablename__ = "annotations"
-    id: int = Field(None, primary_key=True)
-    gif_url: str = Field(nullable=False)
-    label: Label = Field(nullable=True)
+class DetectionAnnotation(SQLModel, table=True):
+    __tablename__ = "labels_detection_annotation"
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    source_api: str = Field(nullable=False)
+    alert_api_id: int = Field(nullable=False)
+    detection_id: int = Field(foreign_key="detections.id", nullable=False)
+    annotation: Dict = Field(nullable=False, sa_column_kwargs={"type_": "jsonb"})
+    # {predictions: [{xyxyn: [x1n y1n x2n y2n], confidence: float, class_name: 'smoke'}, ...]}
+    processing_stages: Dict = Field(nullable=False, sa_column_kwargs={"type_": "jsonb"})
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
+    updated_at: Optional[datetime] = Field(default=None)
