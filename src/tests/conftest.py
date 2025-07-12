@@ -1,7 +1,7 @@
 import asyncio
 import io
-from datetime import datetime
-from typing import AsyncGenerator, Dict, Generator
+from datetime import datetime, timedelta
+from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
@@ -12,135 +12,45 @@ from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel, text
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from app.api.api_v1.endpoints import login, users
 from app.core.config import settings
-from app.core.security import create_access_token
 from app.db import engine
 from app.main import app
-from app.models import Annotation, Detection, Source, User
+from app.models import Detection
 from app.services.storage import s3_service
 
 dt_format = "%Y-%m-%dT%H:%M:%S.%f"
-
-USER_TABLE = [
-    {
-        "id": 1,
-        "source_id": 2,
-        "role": "admin",
-        "login": "first_login",
-        "hashed_password": "hashed_first_pwd",
-        "created_at": datetime.strptime("2024-02-23T08:18:45.447773", dt_format),
-    },
-    {
-        "id": 2,
-        "source_id": 2,
-        "role": "agent",
-        "login": "second_login",
-        "hashed_password": "hashed_second_pwd",
-        "created_at": datetime.strptime("2024-02-23T08:18:45.447774", dt_format),
-    },
-    {
-        "id": 3,
-        "source_id": 3,
-        "role": "user",
-        "login": "third_login",
-        "hashed_password": "hashed_third_pwd",
-        "created_at": datetime.strptime("2024-02-23T08:18:45.447774", dt_format),
-    },
-]
-
-SOURCE_TABLE = [
-    {
-        "id": 1,
-        "camera_id": None,
-        "origin": "pyronearfrenchapi",
-        "origin_url": None,
-        "name": "ADMIN",
-        "angle_of_view": None,
-        "elevation": None,
-        "lat": None,
-        "lon": None,
-        "created_at": datetime.strptime("2023-11-07T15:07:19.226673", dt_format),
-    },
-    {
-        "id": 2,
-        "camera_id": 1,
-        "origin": "pyronearfrenchapi",
-        "origin_url": None,
-        "name": "cam-1",
-        "angle_of_view": 91.3,
-        "elevation": 110.6,
-        "lat": 3.6,
-        "lon": -45.2,
-        "created_at": datetime.strptime("2023-11-07T15:07:19.226673", dt_format),
-    },
-    {
-        "id": 3,
-        "camera_id": None,
-        "origin": "alertwildfire",
-        "origin_url": None,
-        "name": "cam-2",
-        "angle_of_view": 91.3,
-        "elevation": 110.6,
-        "lat": 3.6,
-        "lon": -45.2,
-        "created_at": datetime.strptime("2023-11-07T15:07:19.226673", dt_format),
-    },
-]
-
-
-ANNOTATION_TABLE = [
-    {
-        "id": 1,
-        "gif_url": "url_gif_annotation_1",
-        "label": "wildfire",
-    },
-    {
-        "id": 2,
-        "gif_url": "url_gif_annotation_2",
-        "label": None,
-    },
-]
+now = datetime.utcnow()
 
 DET_TABLE = [
     {
         "id": 1,
-        "source_id": 2,
-        "annotation_id": 1,
-        "azimuth": 43.7,
-        "bucket_key": "my_file",
-        "bboxes_prediction": "[(.1,.1,.7,.8,.9)]",
-        "bbox_auto": None,
-        "bbox_verified": None,
-        "prediction": None,
-        "created_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
-        "updated_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
+        "created_at": now - timedelta(days=2),
+        "sequence_id": 1,
+        "bucket_key": "seq1_img1.jpg",
+        "algo_predictions": {
+            "predictions": [{"xyxyn": [0.12, 0.13, 0.45, 0.48], "confidence": 0.87, "class_name": "smoke"}]
+        },
     },
     {
         "id": 2,
-        "source_id": 2,
-        "annotation_id": 1,
-        "azimuth": 43.7,
-        "bucket_key": "my_file",
-        "bboxes_prediction": "[(.1,.1,.7,.8,.9)]",
-        "bbox_auto": None,
-        "bbox_verified": None,
-        "prediction": None,
-        "created_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
-        "updated_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
+        "created_at": now - timedelta(days=1),
+        "sequence_id": 1,
+        "bucket_key": "seq1_img2.jpg",
+        "algo_predictions": {
+            "predictions": [{"xyxyn": [0.2, 0.25, 0.5, 0.55], "confidence": 0.91, "class_name": "fire"}]
+        },
     },
     {
         "id": 3,
-        "source_id": 3,
-        "annotation_id": 2,
-        "azimuth": 43.7,
-        "bucket_key": "my_file",
-        "bboxes_prediction": "[(.1,.1,.7,.8,.9)]",
-        "bbox_auto": None,
-        "bbox_verified": None,
-        "prediction": None,
-        "created_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
-        "updated_at": datetime.strptime("2023-11-07T15:08:19.226673", dt_format),
+        "created_at": now,
+        "sequence_id": 2,
+        "bucket_key": "seq2_img1.jpg",
+        "algo_predictions": {
+            "predictions": [
+                {"xyxyn": [0.05, 0.05, 0.3, 0.35], "confidence": 0.76, "class_name": "smoke"},
+                {"xyxyn": [0.6, 0.65, 0.85, 0.9], "confidence": 0.80, "class_name": "fire"},
+            ]
+        },
     },
 ]
 
@@ -178,63 +88,10 @@ async def async_session() -> AsyncSession:
         await session.rollback()
 
 
-def mock_verify_password(plain_password, hashed_password):
-    return hashed_password == f"hashed_{plain_password}"
-
-
-def mock_hash_password(password):
-    return f"hashed_{password}"
-
-
 @pytest.fixture(scope="session")
 def mock_img():
     # Get Pyronear logo
     return requests.get("https://avatars.githubusercontent.com/u/61667887?s=200&v=4", timeout=5).content
-
-
-@pytest_asyncio.fixture(scope="function")
-async def user_session(source_session: AsyncSession, monkeypatch):
-    monkeypatch.setattr(users, "hash_password", mock_hash_password)
-    monkeypatch.setattr(login, "verify_password", mock_verify_password)
-    for entry in USER_TABLE:
-        source_session.add(User(**entry))
-    await source_session.commit()
-    await source_session.exec(
-        text(f"ALTER SEQUENCE {User.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in USER_TABLE) + 1}")
-    )
-    await source_session.commit()
-    yield source_session
-    await source_session.rollback()
-
-
-@pytest_asyncio.fixture(scope="function")
-async def source_session(async_session: AsyncSession):
-    for entry in SOURCE_TABLE:
-        async_session.add(Source(**entry))
-    await async_session.commit()
-    await async_session.exec(
-        text(
-            f"ALTER SEQUENCE {Source.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in SOURCE_TABLE) + 1}"
-        )
-    )
-    await async_session.commit()
-    yield async_session
-    await async_session.rollback()
-
-
-@pytest_asyncio.fixture(scope="function")
-async def annotation_session(source_session: AsyncSession):
-    for entry in ANNOTATION_TABLE:
-        source_session.add(Annotation(**entry))
-    await source_session.commit()
-    await source_session.exec(
-        text(
-            f"ALTER SEQUENCE {Annotation.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in ANNOTATION_TABLE) + 1}"
-        )
-    )
-    await source_session.commit()
-    yield source_session
-    await source_session.rollback()
 
 
 @pytest_asyncio.fixture(scope="function")
@@ -264,29 +121,9 @@ async def detection_session(source_session: AsyncSession, user_session: AsyncSes
         pass
 
 
-def get_token(access_id: int, scopes: str, source_id: int) -> Dict[str, str]:
-    token_data = {"sub": str(access_id), "scopes": scopes, "source_id": source_id}
-    token = create_access_token(token_data)
-    return {"Authorization": f"Bearer {token}"}
-
-
 def pytest_configure():
-    # api.security patching
-    pytest.get_token = get_token
     # Table
-    pytest.user_table = [
-        {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in USER_TABLE
-    ]
-    pytest.source_table = [
-        {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in SOURCE_TABLE
-    ]
     pytest.detection_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
         for entry in DET_TABLE
-    ]
-    pytest.annotation_table = [
-        {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
-        for entry in ANNOTATION_TABLE
     ]

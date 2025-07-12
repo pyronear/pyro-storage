@@ -32,7 +32,7 @@ router = APIRouter()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Register a new wildfire detection")
 async def create_detection(
-    model_predictions: Dict,
+    algo_predictions: Dict,
     sequence_id: int,
     file: UploadFile = File(..., alias="file"),
     detections: DetectionCRUD = Depends(get_detection_crud),
@@ -44,7 +44,7 @@ async def create_detection(
     payload = DetectionCreate(
         sequence_id=sequence_id,
         bucket_key=bucket_key,
-        model_predictions=model_predictions,
+        algo_predictions=algo_predictions,
     )
     return await detections.create(payload)
 
