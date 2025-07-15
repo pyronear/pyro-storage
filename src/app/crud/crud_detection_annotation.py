@@ -7,11 +7,11 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.crud.base import BaseCRUD
 from app.models import DetectionAnnotation
-from app.schemas.detection_annotations import DetectionAnnotationCreate,DetectionAnnotation
+from app.schemas.detection_annotations import DetectionAnnotationCreate, DetectionAnnotationUpdate
 
 __all__ = ["DetectionAnnotationCRUD"]
 
 
-class DetectionAnnotationCRUD(BaseCRUD[DetectionAnnotation, DetectionAnnotationCreate, DetectionAnnotation]):
+class DetectionAnnotationCRUD(BaseCRUD[DetectionAnnotation, DetectionAnnotationCreate, DetectionAnnotationUpdate]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, DetectionAnnotation)

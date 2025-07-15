@@ -26,6 +26,8 @@ DET_TABLE = [
         "id": 1,
         "created_at": now - timedelta(days=2),
         "sequence_id": 1,
+        "alert_api_id": 1,
+        "recorded_at": now - timedelta(days=4),
         "bucket_key": "seq1_img1.jpg",
         "algo_predictions": {
             "predictions": [{"xyxyn": [0.12, 0.13, 0.45, 0.48], "confidence": 0.87, "class_name": "smoke"}]
@@ -35,6 +37,8 @@ DET_TABLE = [
         "id": 2,
         "created_at": now - timedelta(days=1),
         "sequence_id": 1,
+        "alert_api_id": 1,
+        "recorded_at": now - timedelta(days=3),
         "bucket_key": "seq1_img2.jpg",
         "algo_predictions": {
             "predictions": [{"xyxyn": [0.2, 0.25, 0.5, 0.55], "confidence": 0.91, "class_name": "fire"}]
@@ -44,6 +48,8 @@ DET_TABLE = [
         "id": 3,
         "created_at": now,
         "sequence_id": 2,
+        "alert_api_id": 1,
+        "recorded_at": now - timedelta(days=2),
         "bucket_key": "seq2_img1.jpg",
         "algo_predictions": {
             "predictions": [
@@ -57,15 +63,19 @@ DET_TABLE = [
 SEQ_TABLE = [
     {
         "id": 1,
-        "source_api": "source1",
+        "source_api": "pyronear_french",
         "alert_api_id": 1,
+        "recorded_at": now - timedelta(days=1),
         "last_seen_at": now,
         "camera_name": "habile",
+        "camera_id": 1,
         "is_wildfire_alertapi": True,
-        "organisation": "habile",
-    },
+        "organisation_name": "habile",
+        "lat": 0.0,
+        "lon": 0.0,
+        "organisation_id": 1,
+    }
 ]
-
 
 
 @pytest.fixture(scope="session")
@@ -133,6 +143,7 @@ async def detection_session(async_session: AsyncSession):
     except ClientError:
         pass
 
+
 @pytest_asyncio.fixture(scope="function")
 async def sequence_session(async_session: AsyncSession):
     for entry in SEQ_TABLE:
@@ -148,7 +159,6 @@ async def sequence_session(async_session: AsyncSession):
 
     yield async_session
     await async_session.rollback()
-
 
 
 def pytest_configure():

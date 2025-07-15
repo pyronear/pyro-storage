@@ -1,19 +1,19 @@
 # Copyright (C) 2024, Pyronear.
 
+import json
 from datetime import datetime
-from typing import Dict, List, Optional
+from typing import List
 
 from fastapi import (
     APIRouter,
     Depends,
     File,
+    Form,
     HTTPException,
     Path,
-    Form,
     UploadFile,
     status,
 )
-from sqlmodel import select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from app.api.dependencies import get_detection_crud
@@ -23,17 +23,18 @@ from app.models import Detection
 from app.schemas.detection import (
     DetectionCreate,
     DetectionUrl,
-    DetectionWithUrl,
 )
 from app.services.storage import s3_service, upload_file
-import json
+
 router = APIRouter()
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED, summary="Register a new wildfire detection")
 async def create_detection(
     algo_predictions: str = Form(...),
+    alert_api_id: int = Form(...),
     sequence_id: int = Form(...),
+    recorded_at: datetime = Form(),
     file: UploadFile = File(..., alias="file"),
     detections: DetectionCRUD = Depends(get_detection_crud),
 ) -> Detection:
@@ -43,10 +44,11 @@ async def create_detection(
     # Upload image to S3
     bucket_key = await upload_file(file)
 
-    print(parsed_predictions)
     # Create detection in DB
     payload = DetectionCreate(
         sequence_id=sequence_id,
+        alert_api_id=alert_api_id,
+        recorded_at=recorded_at,
         bucket_key=bucket_key,
         algo_predictions=parsed_predictions,
     )
@@ -70,7 +72,7 @@ async def get_detection_url(
     if detection is None:
         raise HTTPException(status_code=404, detail="Detection not found")
 
-    bucket = s3_service.get_bucket("default")  # Use your bucket naming convention here
+    bucket = s3_service.get_bucket(s3_service.resolve_bucket_name())  # Use your bucket naming convention here
     return DetectionUrl(url=bucket.get_public_url(detection.bucket_key))
 
 
@@ -79,6 +81,7 @@ async def list_detections(
     detections: DetectionCRUD = Depends(get_detection_crud),
 ) -> List[Detection]:
     return await detections.fetch_all()
+
 
 @router.delete("/{detection_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_detection(

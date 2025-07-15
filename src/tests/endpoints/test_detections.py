@@ -1,37 +1,40 @@
+import json
 from datetime import datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
 from sqlmodel.ext.asyncio.session import AsyncSession
-import json
+
+now = datetime.utcnow()
+
 
 @pytest.mark.asyncio
 async def test_create_detection(async_client: AsyncClient, sequence_session: AsyncSession, mock_img: bytes):
     payload = {
-        "sequence_id": 1,
-        "algo_predictions": {
+        "sequence_id": "1",  # en multipart/form-data, tout est str
+        "alert_api_id": "1",
+        "recorded_at": (now - timedelta(days=2)).isoformat(),
+        "algo_predictions": json.dumps({
             "predictions": [{"xyxyn": [0.1, 0.1, 0.2, 0.2], "confidence": 0.95, "class_name": "smoke"}]
-        },
+        }),
     }
 
     response = await async_client.post(
         "/detections",
-        data={
-            "sequence_id": str(payload["sequence_id"]),
-            "algo_predictions": json.dumps(payload["algo_predictions"]),
-        },
+        data=payload,
         files={"file": ("image.jpg", mock_img, "image/jpeg")},
     )
     print(response.text)
     assert response.status_code == 201
     json_response = response.json()
     assert "id" in json_response
-    assert json_response["sequence_id"] == payload["sequence_id"]
-    assert json_response["algo_predictions"] == payload["algo_predictions"]
+    assert json_response["sequence_id"] == int(payload["sequence_id"])
+    assert json_response["algo_predictions"] == json.loads(payload["algo_predictions"])
 
 
 @pytest.mark.asyncio
-async def test_get_detection(async_client: AsyncClient, detection_id: int = 1):
+async def test_get_detection(async_client: AsyncClient):
+    detection_id = 1
     response = await async_client.get(f"/detections/{detection_id}")
     if response.status_code == 200:
         detection = response.json()
@@ -63,18 +66,17 @@ async def test_list_detections(async_client: AsyncClient):
 async def test_delete_detection(async_client: AsyncClient, sequence_session: AsyncSession, mock_img: bytes):
     # First, create a detection
     payload = {
-        "sequence_id": 1,
-        "algo_predictions": {
+        "sequence_id": "1",  # en multipart/form-data, tout est str
+        "alert_api_id": "1",
+        "recorded_at": (now - timedelta(days=2)).isoformat(),
+        "algo_predictions": json.dumps({
             "predictions": [{"xyxyn": [0.1, 0.1, 0.2, 0.2], "confidence": 0.95, "class_name": "smoke"}]
-        },
+        }),
     }
 
     response = await async_client.post(
         "/detections",
-        data={
-            "sequence_id": str(payload["sequence_id"]),
-            "algo_predictions": json.dumps(payload["algo_predictions"]),
-        },
+        data=payload,
         files={"file": ("image.jpg", mock_img, "image/jpeg")},
     )
     assert response.status_code == 201

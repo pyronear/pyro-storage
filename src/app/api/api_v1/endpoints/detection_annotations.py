@@ -7,9 +7,10 @@ from fastapi import APIRouter, Depends, Form, Path, status
 
 from app.api.dependencies import get_detection_annotation_crud
 from app.crud import DetectionAnnotationCRUD
+from app.models import DetectionAnnotationProcessingStage
 from app.schemas.detection_annotations import (
-    DetectionAnnotation,
     DetectionAnnotationCreate,
+    DetectionAnnotationUpdate,
 )
 
 router = APIRouter()
@@ -21,9 +22,11 @@ async def create_detection_annotation(
     source_api: str = Form(...),
     alert_api_id: int = Form(...),
     annotation: str = Form(..., description="JSON string of annotation object"),
-    processing_stages: str = Form(..., description="JSON string tracking annotation stages"),
+    processing_stages: DetectionAnnotationProcessingStage = Form(
+        ..., description="JSON string tracking annotation stages"
+    ),
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> DetectionAnnotation:
+) -> DetectionAnnotationCreate:
     payload = DetectionAnnotationCreate(
         detection_id=detection_id,
         source_api=source_api,
@@ -38,7 +41,7 @@ async def create_detection_annotation(
 @router.get("/")
 async def list_annotations(
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> List[DetectionAnnotation]:
+) -> List[DetectionAnnotationCreate]:
     return await annotations.fetch_all()
 
 
@@ -46,16 +49,16 @@ async def list_annotations(
 async def get_annotation(
     annotation_id: int = Path(..., gt=0),
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> DetectionAnnotation:
+) -> DetectionAnnotationCreate:
     return await annotations.get(annotation_id, strict=True)
 
 
 @router.patch("/{annotation_id}")
 async def update_annotation(
     annotation_id: int = Path(..., gt=0),
-    payload: DetectionAnnotation = ...,
+    payload: DetectionAnnotationUpdate = ...,
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> DetectionAnnotation:
+) -> DetectionAnnotationUpdate:
     return await annotations.update(annotation_id, payload)
 
 

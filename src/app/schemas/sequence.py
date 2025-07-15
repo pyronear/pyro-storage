@@ -4,6 +4,7 @@
 # See LICENSE or go to <https://opensource.org/licenses/Apache-2.0> for full license details.
 
 
+from datetime import datetime
 from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
@@ -24,11 +25,16 @@ class Azimuth(BaseModel):
 class SequenceCreate(Azimuth):
     source_api: str = Field(nullable=False)
     alert_api_id: int = Field(nullable=False)
+    recorded_at: datetime = Field(nullable=False)
+    last_seen_at: datetime = Field(nullable=False)
     camera_name: str = Field(nullable=False)
+    camera_id: str = Field(nullable=False)
+    lat: float = Field(nullable=False)
+    lon: float = Field(nullable=False)
     azimuth: Optional[int] = Field(default=None)
     is_wildfire_alertapi: bool = Field(nullable=False)
-    organisation: str = Field(nullable=False)
-    algo_prediction: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
+    organisation_name: str = Field(nullable=False)
+    organisation_id: int = Field(nullable=False)
 
 
 class SequenceUpdateBboxAuto(BaseModel):

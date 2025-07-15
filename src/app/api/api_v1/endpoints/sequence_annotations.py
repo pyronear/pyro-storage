@@ -13,10 +13,8 @@ from fastapi import (
 
 from app.api.dependencies import get_sequence_annotation_crud
 from app.crud import SequenceAnnotationCRUD
-from app.models import SequenceStage
-from app.schemas.sequence_annotations import (
-    SequenceAnnotation,
-)
+from app.models import SequenceAnnotationProcessingStage
+from app.schemas.sequence_annotations import SequenceAnnotationCreate, SequenceAnnotationUpdate
 
 router = APIRouter()
 
@@ -28,10 +26,10 @@ async def create_sequence_annotation(
     has_false_positives: bool = Form(...),
     has_missed_smoke: bool = Form(...),
     sequence_bbox_predictions_annotation: str = Form(...),
-    sequence_stage: SequenceStage = Form(...),
+    sequence_stage: SequenceAnnotationProcessingStage = Form(...),
     annotations: SequenceAnnotationCRUD = Depends(get_sequence_annotation_crud),
-) -> SequenceAnnotation:
-    payload = SequenceAnnotation(
+) -> SequenceAnnotationCreate:
+    payload = SequenceAnnotationCreate(
         sequence_id=sequence_id,
         has_smoke=has_smoke,
         has_false_positives=has_false_positives,
@@ -47,7 +45,7 @@ async def create_sequence_annotation(
 @router.get("/")
 async def list_sequence_annotations(
     annotations: SequenceAnnotationCRUD = Depends(get_sequence_annotation_crud),
-) -> List[SequenceAnnotation]:
+) -> List[SequenceAnnotationCreate]:
     return await annotations.fetch_all()
 
 
@@ -55,16 +53,16 @@ async def list_sequence_annotations(
 async def get_sequence_annotation(
     annotation_id: int = Path(..., gt=0),
     annotations: SequenceAnnotationCRUD = Depends(get_sequence_annotation_crud),
-) -> SequenceAnnotation:
+) -> SequenceAnnotationCreate:
     return await annotations.get(annotation_id, strict=True)
 
 
 @router.patch("/{annotation_id}")
 async def update_sequence_annotation(
     annotation_id: int = Path(..., gt=0),
-    payload: SequenceAnnotation = ...,
+    payload: SequenceAnnotationUpdate = ...,
     annotations: SequenceAnnotationCRUD = Depends(get_sequence_annotation_crud),
-) -> SequenceAnnotation:
+) -> SequenceAnnotationUpdate:
     return await annotations.update(annotation_id, payload)
 
 

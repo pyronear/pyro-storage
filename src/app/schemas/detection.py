@@ -4,6 +4,7 @@
 # See LICENSE or go to <https://opensource.org/licenses/Apache-2.0> for full license details.
 
 
+from datetime import datetime
 from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
@@ -17,13 +18,15 @@ __all__ = [
 
 class DetectionCreate(BaseModel):
     sequence_id: Optional[int]
+    recorded_at: datetime
+    alert_api_id: int
     bucket_key: str
     algo_predictions: Dict
 
 
 class DetectionUrl(BaseModel):
-    img_url: str = Field(..., description="temporary URL to access the media content")
+    url: str = Field(..., description="temporary URL to access the media content")
 
 
 class DetectionWithUrl(DetectionCreate):
-    img_url: str = Field(..., description="temporary URL to access the media content")
+    url: str = Field(..., description="temporary URL to access the media content")
