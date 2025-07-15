@@ -19,5 +19,4 @@ RUN set -eux \
 
 # copy project
 COPY src/alembic.ini /app/alembic.ini
-COPY src/migrations /app/migrations
 COPY src/app /app/app

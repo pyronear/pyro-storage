@@ -48,7 +48,7 @@ from app.services.storage import S3Bucket, S3Service
 async def test_s3_service(region, endpoint_url, access_key, secret_key, proxy_url, expected_error):
     if expected_error is None:
         service = S3Service(region, endpoint_url, access_key, secret_key, proxy_url)
-        assert isinstance(service.resolve_bucket_name(1), str)
+        assert isinstance(service.resolve_bucket_name(), str)
         # Create random bucket
         bucket_name = "dummy-bucket"
         service.create_bucket(bucket_name)

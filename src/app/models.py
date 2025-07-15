@@ -38,13 +38,13 @@ class Sequence(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     source_api: str = Field(nullable=False)
     alert_api_id: int = Field(nullable=False)
-    created_at: datetime = Field(nullable=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     last_seen_at: datetime = Field(nullable=False)
     camera_name: str = Field(nullable=False)
     azimuth: Optional[int] = Field(default=None)
     is_wildfire_alertapi: bool = Field(nullable=False)
     organisation: str = Field(nullable=False)
-    algo_prediction: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
+    # algo_prediction: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
     # {
     #   sequences_bbox: [{
     #   is_smoke: bool,
@@ -71,7 +71,7 @@ class SequenceAnnotation(SQLModel, table=True):
     #   bboxes: [{detection_id: int, xyxyn: [x1n y1n x2n y2n]}]
     #   }, ...]
     # }
-    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow)
+    created_at: Optional[datetime] = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: Optional[datetime] = Field(default=None)
     sequence_stage: SequenceStage = Field(nullable=False)
 
@@ -82,7 +82,7 @@ class Detection(SQLModel, table=True):
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     sequence_id: Optional[int] = Field(foreign_key="sequences.id", nullable=True)
     bucket_key: str = Field(nullable=False)
-    algo_prediction: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
+    algo_predictions: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
     # {predictions: [{xyxyn: [x1n y1n x2n y2n], confidence: float, class_name: 'smoke'}, ...]}
 
 

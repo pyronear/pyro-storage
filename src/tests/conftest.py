@@ -15,7 +15,7 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from app.core.config import settings
 from app.db import engine
 from app.main import app
-from app.models import Detection
+from app.models import Detection, Sequence
 from app.services.storage import s3_service
 
 dt_format = "%Y-%m-%dT%H:%M:%S.%f"
@@ -53,6 +53,19 @@ DET_TABLE = [
         },
     },
 ]
+
+SEQ_TABLE = [
+    {
+        "id": 1,
+        "source_api": "source1",
+        "alert_api_id": 1,
+        "last_seen_at": now,
+        "camera_name": "habile",
+        "is_wildfire_alertapi": True,
+        "organisation": "habile",
+    },
+]
+
 
 
 @pytest.fixture(scope="session")
@@ -95,30 +108,47 @@ def mock_img():
 
 
 @pytest_asyncio.fixture(scope="function")
-async def detection_session(source_session: AsyncSession, user_session: AsyncSession, annotation_session: AsyncSession):
+async def detection_session(async_session: AsyncSession):
     for entry in DET_TABLE:
-        user_session.add(Detection(**entry))
-    await user_session.commit()
+        async_session.add(Detection(**entry))
+    await async_session.commit()
     # Update the detection index count
-    await user_session.exec(
+    await async_session.exec(
         text(
             f"ALTER SEQUENCE {Detection.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in DET_TABLE) + 1}"
         )
     )
-    await user_session.commit()
+    await async_session.commit()
     # Create bucket files
     for entry in DET_TABLE:
-        bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(entry["source_id"]))
+        bucket = s3_service.get_bucket(s3_service.resolve_bucket_name())
         bucket.upload_file(entry["bucket_key"], io.BytesIO(b""))
-    yield user_session
-    await user_session.rollback()
+    yield async_session
+    await async_session.rollback()
     # Delete bucket files
     try:
         for entry in DET_TABLE:
-            bucket = s3_service.get_bucket(s3_service.resolve_bucket_name(entry["source_id"]))
+            bucket = s3_service.get_bucket(s3_service.resolve_bucket_name())
             bucket.delete_file(entry["bucket_key"])
     except ClientError:
         pass
+
+@pytest_asyncio.fixture(scope="function")
+async def sequence_session(async_session: AsyncSession):
+    for entry in SEQ_TABLE:
+        async_session.add(Sequence(**entry))
+    await async_session.commit()
+    # Update the detection index count
+    await async_session.exec(
+        text(
+            f"ALTER SEQUENCE {Sequence.__tablename__}_id_seq RESTART WITH {max(entry['id'] for entry in SEQ_TABLE) + 1}"
+        )
+    )
+    await async_session.commit()
+
+    yield async_session
+    await async_session.rollback()
+
 
 
 def pytest_configure():
@@ -126,4 +156,8 @@ def pytest_configure():
     pytest.detection_table = [
         {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
         for entry in DET_TABLE
+    ]
+    pytest.sequence_table = [
+        {k: datetime.strftime(v, dt_format) if isinstance(v, datetime) else v for k, v in entry.items()}
+        for entry in SEQ_TABLE
     ]

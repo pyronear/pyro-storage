@@ -12,6 +12,6 @@ from app.schemas.detection import DetectionCreate
 __all__ = ["DetectionCRUD"]
 
 
-class DetectionCRUD(BaseCRUD[Detection, DetectionCreate]):
+class DetectionCRUD(BaseCRUD[Detection, DetectionCreate, DetectionCreate]):
     def __init__(self, session: AsyncSession) -> None:
         super().__init__(session, Detection)

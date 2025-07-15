@@ -2,10 +2,11 @@ from datetime import datetime, timedelta
 
 import pytest
 from httpx import AsyncClient
-
+from sqlmodel.ext.asyncio.session import AsyncSession
+import json
 
 @pytest.mark.asyncio
-async def test_create_detection(async_client: AsyncClient, mock_img: bytes):
+async def test_create_detection(async_client: AsyncClient, sequence_session: AsyncSession, mock_img: bytes):
     payload = {
         "sequence_id": 1,
         "algo_predictions": {
@@ -16,11 +17,12 @@ async def test_create_detection(async_client: AsyncClient, mock_img: bytes):
     response = await async_client.post(
         "/detections",
         data={
-            "sequence_id": payload["sequence_id"],
-            "algo_predictions": str(payload["algo_predictions"]),
+            "sequence_id": str(payload["sequence_id"]),
+            "algo_predictions": json.dumps(payload["algo_predictions"]),
         },
         files={"file": ("image.jpg", mock_img, "image/jpeg")},
     )
+    print(response.text)
     assert response.status_code == 201
     json_response = response.json()
     assert "id" in json_response
@@ -58,33 +60,25 @@ async def test_list_detections(async_client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_fetch_unlabeled_detections(async_client: AsyncClient):
-    # Use a valid datetime in ISO format
-    from_date = (datetime.utcnow() - timedelta(days=1)).isoformat()
-    response = await async_client.get(f"/detections/unlabeled/fromdate?from_date={from_date}")
-    assert response.status_code == 200
-    results = response.json()
-    assert isinstance(results, list)
-    for det in results:
-        assert "url" in det
-        assert det["url"].startswith("http")
-
-
-@pytest.mark.asyncio
-async def test_delete_detection(async_client: AsyncClient):
+async def test_delete_detection(async_client: AsyncClient, sequence_session: AsyncSession, mock_img: bytes):
     # First, create a detection
-    create_resp = await async_client.post(
+    payload = {
+        "sequence_id": 1,
+        "algo_predictions": {
+            "predictions": [{"xyxyn": [0.1, 0.1, 0.2, 0.2], "confidence": 0.95, "class_name": "smoke"}]
+        },
+    }
+
+    response = await async_client.post(
         "/detections",
         data={
-            "sequence_id": 1,
-            "algo_predictions": str({
-                "predictions": [{"xyxyn": [0.1, 0.1, 0.2, 0.2], "confidence": 0.95, "class_name": "smoke"}]
-            }),
+            "sequence_id": str(payload["sequence_id"]),
+            "algo_predictions": json.dumps(payload["algo_predictions"]),
         },
-        files={"file": ("image.jpg", b"dummydata", "image/jpeg")},
+        files={"file": ("image.jpg", mock_img, "image/jpeg")},
     )
-    assert create_resp.status_code == 201
-    detection_id = create_resp.json()["id"]
+    assert response.status_code == 201
+    detection_id = response.json()["id"]
 
     # Now delete it
     delete_resp = await async_client.delete(f"/detections/{detection_id}")

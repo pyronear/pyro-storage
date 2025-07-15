@@ -146,11 +146,11 @@ class S3Service:
             return False
 
     @staticmethod
-    def resolve_bucket_name(source_id: int) -> str:
-        return f"{settings.SERVER_NAME}-annotation-api-{source_id!s}"
+    def resolve_bucket_name() -> str:
+        return f"annotation-api"
 
 
-async def upload_file(file: UploadFile, source_id: int) -> str:
+async def upload_file(file: UploadFile) -> str:
     """Upload a file to S3 storage and return the public URL"""
     # Concatenate the first 8 chars (to avoid system interactions issues) of SHA256 hash with file extension
     sha_hash = hashlib.sha256(file.file.read()).hexdigest()
@@ -161,10 +161,10 @@ async def upload_file(file: UploadFile, source_id: int) -> str:
     # guess_extension will return none if this fails
     extension = guess_extension(magic.from_buffer(file.file.read(), mime=True)) or ""
     # Concatenate timestamp & hash
-    bucket_key = f"{source_id}-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{sha_hash[:8]}{extension}"
+    bucket_key = f"{datetime.utcnow().strftime('%Y%m%d%H%M%S')}-{sha_hash[:8]}{extension}"
     # Reset byte position of the file (cf. https://fastapi.tiangolo.com/tutorial/request-files/#uploadfile)
     await file.seek(0)
-    bucket_name = s3_service.resolve_bucket_name(source_id)
+    bucket_name = s3_service.resolve_bucket_name()
     bucket = s3_service.get_bucket(bucket_name)
     # Upload the file
     if not bucket.upload_file(bucket_key, file.file):  # type: ignore[arg-type]

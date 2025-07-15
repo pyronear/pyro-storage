@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio.engine import AsyncEngine
 from sqlalchemy.orm import sessionmaker
 from sqlmodel import SQLModel, create_engine
 from sqlmodel.ext.asyncio.session import AsyncSession
-
+from app import models # need it for model loading
 from app.core.config import settings
 
 __all__ = ["get_session", "init_db"]
