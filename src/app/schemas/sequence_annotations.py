@@ -11,7 +11,7 @@ from pydantic import BaseModel, Field
 
 from app.models import SequenceAnnotationProcessingStage
 
-__all__ = ["SequenceAnnotationCreate", "SequenceAnnotationUpdate"]
+__all__ = ["SequenceAnnotationCreate", "SequenceAnnotationRead", "SequenceAnnotationUpdate"]
 
 
 class SequenceAnnotationCreate(BaseModel):
@@ -22,6 +22,20 @@ class SequenceAnnotationCreate(BaseModel):
     has_missed_smoke: bool = Field(nullable=False)
     annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
     processing_stage: SequenceAnnotationProcessingStage = Field(nullable=False)
+    created_at: datetime
+
+
+class SequenceAnnotationRead(BaseModel):
+    id: int
+    sequence_id: int
+    has_smoke: bool
+    has_false_positives: bool
+    false_positive_types: str
+    has_missed_smoke: bool
+    annotation: Optional[Dict]
+    processing_stage: SequenceAnnotationProcessingStage
+    created_at: datetime
+    updated_at: Optional[datetime]
 
 
 class SequenceAnnotationUpdate(BaseModel):
@@ -31,4 +45,4 @@ class SequenceAnnotationUpdate(BaseModel):
     has_missed_smoke: bool = Field(nullable=False)
     annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
     processing_stage: SequenceAnnotationProcessingStage = Field(nullable=False)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime]

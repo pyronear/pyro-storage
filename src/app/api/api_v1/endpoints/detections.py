@@ -22,6 +22,7 @@ from app.db import get_session
 from app.models import Detection
 from app.schemas.detection import (
     DetectionCreate,
+    DetectionRead,
     DetectionUrl,
 )
 from app.services.storage import s3_service, upload_file
@@ -37,7 +38,7 @@ async def create_detection(
     recorded_at: datetime = Form(),
     file: UploadFile = File(..., alias="file"),
     detections: DetectionCRUD = Depends(get_detection_crud),
-) -> Detection:
+) -> DetectionRead:
     # Parse string JSON -> dict
     parsed_predictions = json.loads(algo_predictions)
 
@@ -59,7 +60,7 @@ async def create_detection(
 async def get_detection(
     detection_id: int = Path(..., gt=0),
     detections: DetectionCRUD = Depends(get_detection_crud),
-) -> Detection:
+) -> DetectionRead:
     return await detections.get(detection_id, strict=True)
 
 
@@ -79,7 +80,7 @@ async def get_detection_url(
 @router.get("/")
 async def list_detections(
     detections: DetectionCRUD = Depends(get_detection_crud),
-) -> List[Detection]:
+) -> List[DetectionRead]:
     return await detections.fetch_all()
 
 

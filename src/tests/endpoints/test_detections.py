@@ -24,7 +24,6 @@ async def test_create_detection(async_client: AsyncClient, sequence_session: Asy
         data=payload,
         files={"file": ("image.jpg", mock_img, "image/jpeg")},
     )
-    print(response.text)
     assert response.status_code == 201
     json_response = response.json()
     assert "id" in json_response
@@ -64,7 +63,6 @@ async def test_list_detections(async_client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_delete_detection(async_client: AsyncClient, sequence_session: AsyncSession, mock_img: bytes):
-    # First, create a detection
     payload = {
         "sequence_id": "1",  # en multipart/form-data, tout est str
         "alert_api_id": "1",
@@ -82,10 +80,8 @@ async def test_delete_detection(async_client: AsyncClient, sequence_session: Asy
     assert response.status_code == 201
     detection_id = response.json()["id"]
 
-    # Now delete it
     delete_resp = await async_client.delete(f"/detections/{detection_id}")
     assert delete_resp.status_code == 204
 
-    # Confirm deletion
     get_resp = await async_client.get(f"/detections/{detection_id}")
     assert get_resp.status_code == 404

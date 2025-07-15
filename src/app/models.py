@@ -42,11 +42,11 @@ class SourceApi(str, Enum):
 
 class Sequence(SQLModel, table=True):
     __tablename__ = "sequences"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     source_api: SourceApi = Field(nullable=False)
     alert_api_id: int = Field(nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
-    recorded_at: datetime = Field(nullable=False)
+    # recorded_at: datetime = Field(nullable=False)
     last_seen_at: datetime = Field(nullable=False)
     camera_name: str = Field(nullable=False)
     camera_id: int = Field(nullable=False)
@@ -69,7 +69,7 @@ class Sequence(SQLModel, table=True):
 
 class SequenceAnnotation(SQLModel, table=True):
     __tablename__ = "labels_sequence_annotation"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     sequence_id: int = Field(foreign_key="sequences.id", nullable=False)
     has_smoke: bool = Field(nullable=False)
     has_false_positives: bool = Field(nullable=False)
@@ -92,7 +92,7 @@ class SequenceAnnotation(SQLModel, table=True):
 
 class Detection(SQLModel, table=True):
     __tablename__ = "detections"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     recorded_at: datetime = Field(nullable=False)
     alert_api_id: int = Field(nullable=False)
@@ -104,10 +104,10 @@ class Detection(SQLModel, table=True):
 
 class DetectionAnnotation(SQLModel, table=True):
     __tablename__ = "labels_detection_annotation"
-    id: Optional[int] = Field(default=None, primary_key=True)
+    id: int = Field(default=None, primary_key=True)
     detection_id: int = Field(foreign_key="detections.id", nullable=False)
     annotation: dict = Field(default=None, sa_column=Column(JSONB))
     # {predictions: [{xyxyn: [x1n y1n x2n y2n], confidence: float, class_name: 'smoke'}, ...]}
-    processing_stages: SequenceAnnotationProcessingStage = Field(default=None, nullable=False)
+    processing_stages: DetectionAnnotationProcessingStage = Field(default=None, nullable=False)
     created_at: datetime = Field(default_factory=datetime.utcnow, nullable=False)
     updated_at: Optional[datetime] = Field(default=None)

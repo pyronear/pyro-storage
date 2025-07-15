@@ -65,7 +65,7 @@ SEQ_TABLE = [
         "id": 1,
         "source_api": "pyronear_french",
         "alert_api_id": 1,
-        "recorded_at": now - timedelta(days=1),
+        # "recorded_at": now - timedelta(days=1),
         "last_seen_at": now,
         "camera_name": "habile",
         "camera_id": 1,

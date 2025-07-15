@@ -9,7 +9,7 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
-__all__ = ["Azimuth", "SequenceCreate", "SequenceUpdateBboxAuto", "SequenceUpdateBboxVerified"]
+__all__ = ["Azimuth", "SequenceCreate", "SequenceRead", "SequenceUpdateBboxAuto", "SequenceUpdateBboxVerified"]
 
 
 class Azimuth(BaseModel):
@@ -25,16 +25,33 @@ class Azimuth(BaseModel):
 class SequenceCreate(Azimuth):
     source_api: str = Field(nullable=False)
     alert_api_id: int = Field(nullable=False)
-    recorded_at: datetime = Field(nullable=False)
+    # recorded_at: datetime = Field(nullable=False)
     last_seen_at: datetime = Field(nullable=False)
     camera_name: str = Field(nullable=False)
-    camera_id: str = Field(nullable=False)
+    camera_id: int = Field(nullable=False)
     lat: float = Field(nullable=False)
     lon: float = Field(nullable=False)
     azimuth: Optional[int] = Field(default=None)
     is_wildfire_alertapi: bool = Field(nullable=False)
     organisation_name: str = Field(nullable=False)
     organisation_id: int = Field(nullable=False)
+
+
+class SequenceRead(Azimuth):
+    id: int
+    source_api: str
+    alert_api_id: int
+    created_at: datetime
+    # recorded_at: datetime
+    last_seen_at: datetime
+    camera_name: str
+    camera_id: int
+    lat: float
+    lon: float
+    azimuth: Optional[int]
+    is_wildfire_alertapi: bool
+    organisation_name: str
+    organisation_id: int
 
 
 class SequenceUpdateBboxAuto(BaseModel):

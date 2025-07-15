@@ -9,14 +9,19 @@ from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
-__all__ = [
-    "DetectionCreate",
-    "DetectionUrl",
-    "DetectionWithUrl",
-]
+__all__ = ["DetectionCreate", "DetectionRead", "DetectionUrl", "DetectionWithUrl"]
 
 
 class DetectionCreate(BaseModel):
+    sequence_id: Optional[int]
+    recorded_at: datetime
+    alert_api_id: int
+    bucket_key: str
+    algo_predictions: Dict
+
+
+class DetectionRead(BaseModel):
+    id: int
     sequence_id: Optional[int]
     recorded_at: datetime
     alert_api_id: int

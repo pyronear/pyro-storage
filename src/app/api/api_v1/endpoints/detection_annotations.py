@@ -1,5 +1,6 @@
 # Copyright (C) 2025, Pyronear.
 
+import json
 from datetime import datetime
 from typing import List
 
@@ -10,6 +11,7 @@ from app.crud import DetectionAnnotationCRUD
 from app.models import DetectionAnnotationProcessingStage
 from app.schemas.detection_annotations import (
     DetectionAnnotationCreate,
+    DetectionAnnotationRead,
     DetectionAnnotationUpdate,
 )
 
@@ -26,12 +28,13 @@ async def create_detection_annotation(
         ..., description="JSON string tracking annotation stages"
     ),
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> DetectionAnnotationCreate:
+) -> DetectionAnnotationRead:
+    parsed_annotation = json.loads(annotation)
     payload = DetectionAnnotationCreate(
         detection_id=detection_id,
         source_api=source_api,
         alert_api_id=alert_api_id,
-        annotation=annotation,
+        annotation=parsed_annotation,
         processing_stages=processing_stages,
         created_at=datetime.utcnow(),
     )
@@ -41,7 +44,7 @@ async def create_detection_annotation(
 @router.get("/")
 async def list_annotations(
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> List[DetectionAnnotationCreate]:
+) -> List[DetectionAnnotationRead]:
     return await annotations.fetch_all()
 
 
@@ -49,7 +52,7 @@ async def list_annotations(
 async def get_annotation(
     annotation_id: int = Path(..., gt=0),
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> DetectionAnnotationCreate:
+) -> DetectionAnnotationRead:
     return await annotations.get(annotation_id, strict=True)
 
 
@@ -58,8 +61,9 @@ async def update_annotation(
     annotation_id: int = Path(..., gt=0),
     payload: DetectionAnnotationUpdate = ...,
     annotations: DetectionAnnotationCRUD = Depends(get_detection_annotation_crud),
-) -> DetectionAnnotationUpdate:
-    return await annotations.update(annotation_id, payload)
+) -> DetectionAnnotationRead:
+    updated_payload = payload.copy(update={"updated_at": datetime.utcnow()})
+    return await annotations.update(annotation_id, updated_payload)
 
 
 @router.delete("/{annotation_id}", status_code=status.HTTP_204_NO_CONTENT)

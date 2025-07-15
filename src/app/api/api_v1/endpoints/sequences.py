@@ -13,9 +13,9 @@ from fastapi import (
 
 from app.api.dependencies import get_sequence_crud
 from app.crud import SequenceCRUD
-from app.models import Sequence
 from app.schemas.sequence import (
     SequenceCreate,
+    SequenceRead,
 )
 
 router = APIRouter()
@@ -26,19 +26,29 @@ async def create_sequence(
     source_api: str = Form(...),
     alert_api_id: int = Form(...),
     camera_name: str = Form(...),
-    organisation: str = Form(...),
+    camera_id: int = Form(...),
+    organisation_name: str = Form(...),
+    organisation_id: int = Form(...),
     is_wildfire_alertapi: bool = Form(...),
+    lat: float = Form(...),
+    lon: float = Form(...),
     azimuth: Optional[int] = Form(None),
     created_at: Optional[datetime] = Form(None),
+    # recorded_at: datetime = Form(None),
     last_seen_at: Optional[datetime] = Form(None),
     sequences: SequenceCRUD = Depends(get_sequence_crud),
-) -> Sequence:
+) -> SequenceRead:
     payload = SequenceCreate(
         source_api=source_api,
         alert_api_id=alert_api_id,
+        # recorded_at=recorded_at,
         camera_name=camera_name,
-        organisation=organisation,
+        camera_id=camera_id,
+        organisation_name=organisation_name,
+        organisation_id=organisation_id,
         is_wildfire_alertapi=is_wildfire_alertapi,
+        lat=lat,
+        lon=lon,
         azimuth=azimuth,
         created_at=created_at or datetime.utcnow(),
         last_seen_at=last_seen_at or datetime.utcnow(),
@@ -49,7 +59,7 @@ async def create_sequence(
 @router.get("/")
 async def list_sequences(
     sequences: SequenceCRUD = Depends(get_sequence_crud),
-) -> List[Sequence]:
+) -> List[SequenceRead]:
     return await sequences.fetch_all()
 
 
@@ -57,7 +67,7 @@ async def list_sequences(
 async def get_sequence(
     sequence_id: int = Path(..., gt=0),
     sequences: SequenceCRUD = Depends(get_sequence_crud),
-) -> Sequence:
+) -> SequenceRead:
     return await sequences.get(sequence_id, strict=True)
 
 

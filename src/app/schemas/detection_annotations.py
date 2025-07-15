@@ -5,13 +5,13 @@
 
 
 from datetime import datetime
-from typing import Dict
+from typing import Dict, Optional
 
 from pydantic import BaseModel, Field
 
 from app.models import DetectionAnnotationProcessingStage
 
-__all__ = ["DetectionAnnotationCreate", "DetectionAnnotationUpdate"]
+__all__ = ["DetectionAnnotationCreate", "DetectionAnnotationRead", "DetectionAnnotationUpdate"]
 
 
 class DetectionAnnotationCreate(BaseModel):
@@ -20,7 +20,16 @@ class DetectionAnnotationCreate(BaseModel):
     processing_stages: DetectionAnnotationProcessingStage = Field(nullable=False, sa_column_kwargs={"type_": "jsonb"})
 
 
+class DetectionAnnotationRead(BaseModel):
+    id: int
+    detection_id: int
+    annotation: Dict
+    processing_stages: DetectionAnnotationProcessingStage
+    created_at: datetime
+    updated_at: Optional[datetime]
+
+
 class DetectionAnnotationUpdate(BaseModel):
     annotation: Dict = Field(nullable=False, sa_column_kwargs={"type_": "jsonb"})
     processing_stages: DetectionAnnotationProcessingStage = Field(nullable=False, sa_column_kwargs={"type_": "jsonb"})
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    updated_at: Optional[datetime]
