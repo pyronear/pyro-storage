@@ -75,7 +75,7 @@ class SequenceAnnotation(SQLModel, table=True):
     has_false_positives: bool = Field(nullable=False)
     false_positive_types: str = Field(nullable=False)
     has_missed_smoke: bool = Field(nullable=False)
-    annotation: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
+    #annotation: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
     # {
     #   sequences_bbox: [{
     #   is_smoke: bool,

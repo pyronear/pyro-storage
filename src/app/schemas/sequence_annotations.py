@@ -20,7 +20,7 @@ class SequenceAnnotationCreate(BaseModel):
     has_false_positives: bool = Field(nullable=False)
     false_positive_types: str = Field(nullable=False)
     has_missed_smoke: bool = Field(nullable=False)
-    annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
+    # annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
     processing_stage: SequenceAnnotationProcessingStage = Field(nullable=False)
     created_at: datetime
 
@@ -32,7 +32,7 @@ class SequenceAnnotationRead(BaseModel):
     has_false_positives: bool
     false_positive_types: str
     has_missed_smoke: bool
-    annotation: Optional[Dict]
+    # annotation: Optional[Dict]
     processing_stage: SequenceAnnotationProcessingStage
     created_at: datetime
     updated_at: Optional[datetime]
@@ -43,6 +43,6 @@ class SequenceAnnotationUpdate(BaseModel):
     has_false_positives: bool = Field(nullable=False)
     false_positive_types: str = Field(nullable=False)
     has_missed_smoke: bool = Field(nullable=False)
-    annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
+    # annotation: Optional[Dict] = Field(default=None, sa_column_kwargs={"type_": "jsonb"})
     processing_stage: SequenceAnnotationProcessingStage = Field(nullable=False)
     updated_at: Optional[datetime]

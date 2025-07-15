@@ -12,17 +12,17 @@ async def test_create_sequence_annotation(async_client: AsyncClient, sequence_se
         "has_smoke": "true",
         "has_false_positives": "false",
         "has_missed_smoke": "false",
-        "annotation": json.dumps({
-            "sequences_bbox": [
-                {
-                    "is_smoke": True,
-                    "gif_url_main": "http://example.com/main.gif",
-                    "gif_url_crop": "http://example.com/crop.gif",
-                    "false_positive_types": [],
-                    "bboxes": [{"detection_id": 1, "xyxyn": [0.1, 0.1, 0.2, 0.2]}],
-                }
-            ]
-        }),
+        #"annotation": json.dumps({
+        #    "sequences_bbox": [
+        #        {
+        #            "is_smoke": True,
+        #            "gif_url_main": "http://example.com/main.gif",
+        #            "gif_url_crop": "http://example.com/crop.gif",
+        #            "false_positive_types": [],
+        #            "bboxes": [{"detection_id": 1, "xyxyn": [0.1, 0.1, 0.2, 0.2]}],
+        #        }
+        #    ]
+        #}),
         "processing_stage": "imported",
         "false_positive_types": "[]",
     }
@@ -61,17 +61,17 @@ async def test_patch_sequence_annotation(async_client: AsyncClient):
         "has_smoke": True,
         "has_false_positives": True,
         "has_missed_smoke": False,
-        "annotation": {
-            "sequences_bbox": [
-                {
-                    "is_smoke": False,
-                    "gif_url_main": "http://updated.com/main.gif",
-                    "gif_url_crop": "http://updated.com/crop.gif",
-                    "false_positive_types": ["lens_flare"],
-                    "bboxes": [{"detection_id": 1, "xyxyn": [0.2, 0.2, 0.3, 0.3]}],
-                }
-            ]
-        },
+        #"annotation": {
+        #    "sequences_bbox": [
+        #        {
+        #            "is_smoke": False,
+        #            "gif_url_main": "http://updated.com/main.gif",
+        #            "gif_url_crop": "http://updated.com/crop.gif",
+        #            "false_positive_types": ["lens_flare"],
+        #            "bboxes": [{"detection_id": 1, "xyxyn": [0.2, 0.2, 0.3, 0.3]}],
+        #        }
+        #    ]
+        #},
         "processing_stage": "REVIEWED",
         "false_positive_types": '["lens_flare"]',
         "updated_at": datetime.utcnow().isoformat()
@@ -95,17 +95,17 @@ async def test_delete_sequence_annotation(async_client: AsyncClient, sequence_se
         "has_smoke": "true",
         "has_false_positives": "false",
         "has_missed_smoke": "false",
-        "annotation": json.dumps({
-            "sequences_bbox": [
-                {
-                    "is_smoke": True,
-                    "gif_url_main": "http://example.com/main.gif",
-                    "gif_url_crop": "http://example.com/crop.gif",
-                    "false_positive_types": [],
-                    "bboxes": [{"detection_id": 1, "xyxyn": [0.1, 0.1, 0.2, 0.2]}],
-                }
-            ]
-        }),
+        #"annotation": json.dumps({
+        #    "sequences_bbox": [
+        #        {
+        #            "is_smoke": True,
+        #            "gif_url_main": "http://example.com/main.gif",
+        #            "gif_url_crop": "http://example.com/crop.gif",
+        #            "false_positive_types": [],
+        #            "bboxes": [{"detection_id": 1, "xyxyn": [0.1, 0.1, 0.2, 0.2]}],
+        #        }
+        #    ]
+        #}),
         "processing_stage": "imported",
         "false_positive_types": "[]",
     }

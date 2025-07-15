@@ -25,18 +25,18 @@ async def create_sequence_annotation(
     has_smoke: bool = Form(...),
     has_false_positives: bool = Form(...),
     has_missed_smoke: bool = Form(...),
-    annotation: str = Form(...),
+    #annotation: str = Form(...),
     processing_stage: SequenceAnnotationProcessingStage = Form(...),
     annotations: SequenceAnnotationCRUD = Depends(get_sequence_annotation_crud),
     false_positive_types: str = Form(...),
 ) -> SequenceAnnotationRead:
-    parsed_annotation = json.loads(annotation)
+    #parsed_annotation = json.loads(annotation)
     payload = SequenceAnnotationCreate(
         sequence_id=sequence_id,
         has_smoke=has_smoke,
         has_false_positives=has_false_positives,
         has_missed_smoke=has_missed_smoke,
-        annotation=parsed_annotation,
+        #annotation=parsed_annotation,
         processing_stage=processing_stage,
         false_positive_types=false_positive_types,
         created_at=datetime.utcnow(),
